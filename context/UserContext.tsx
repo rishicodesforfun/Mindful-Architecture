@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
+import { progressService, userStateToProgress, progressToUserState } from '../src/services';
+import { useAuth } from './AuthContext';
 
 // Types
 export type ProgramTheme = 'anxiety' | 'focus' | 'emotional' | 'sleep' | 'confidence' | 'lifestyle';
@@ -64,6 +66,7 @@ export interface UserState {
 
 interface UserContextType {
     user: UserState;
+    isLoading: boolean;
 
     // Actions
     setName: (name: string) => void;
@@ -99,6 +102,10 @@ interface UserContextType {
     getDaysInBlock: () => number;
     getWeeklyMoodAverage: () => number;
     getTodayCompletion: () => SessionCompletion | undefined;
+
+    // Logout
+    logout: () => Promise<void>;
+    clearProgressAndLogout: () => Promise<void>;
 }
 
 const defaultUserState: UserState = {
@@ -124,35 +131,83 @@ const defaultUserState: UserState = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// Storage key
-const STORAGE_KEY = 'mindful_architecture_user';
-
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<UserState>(() => {
-        // Try to load from localStorage
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                // Convert date strings back to Date objects
-                if (parsed.programStartDate) parsed.programStartDate = new Date(parsed.programStartDate);
-                if (parsed.pauseExpiresAt) parsed.pauseExpiresAt = new Date(parsed.pauseExpiresAt);
-                return { ...defaultUserState, ...parsed };
-            }
-        } catch (e) {
-            console.error('Failed to load user state:', e);
-        }
-        return defaultUserState;
-    });
+    const { session, logout: authLogout } = useAuth();
+    const [user, setUser] = useState<UserState>(defaultUserState);
+    const [isLoading, setIsLoading] = useState(true);
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Save to localStorage on changes
+    // React to session changes
     useEffect(() => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-        } catch (e) {
-            console.error('Failed to save user state:', e);
+        const loadUserData = async () => {
+            if (session?.userId) {
+                setIsLoading(true);
+                try {
+                    // Load progress for this specific user ID
+                    const progress = await progressService.getProgress(session.userId);
+
+                    if (progress) {
+                        setUser(progressToUserState(progress));
+                        console.log(`[UserContext] Loaded progress for user ID: ${session.userId}`);
+                    } else {
+                        // New user or no progress yet - reset to default but keep name from session
+                        setUser({
+                            ...defaultUserState,
+                            name: session.username, // Use username as default name
+                        });
+                        console.log(`[UserContext] Initialized new user state for: ${session.username}`);
+                    }
+                } catch (error) {
+                    console.error('[UserContext] Error loading user data:', error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                // No session - reset state
+                setUser(defaultUserState);
+                setIsLoading(false);
+            }
+        };
+
+        loadUserData();
+    }, [session?.userId, session?.username]); // Re-run when user changes
+
+    // Debounced save to IndexedDB
+    const saveToIndexedDB = useCallback(async (state: UserState) => {
+        if (!session?.userId) return; // Don't save if not logged in
+
+        // Clear any pending save
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
         }
-    }, [user]);
+
+        // Debounce saves
+        saveTimeoutRef.current = setTimeout(async () => {
+            try {
+                // Use session.userId as the key!
+                const progress = userStateToProgress(state, session.userId);
+                await progressService.saveProgress(progress);
+            } catch (error) {
+                console.error('[UserContext] Error saving to IndexedDB:', error);
+            }
+        }, 300); // 300ms debounce
+    }, [session?.userId]);
+
+    // Save to IndexedDB on state changes
+    useEffect(() => {
+        if (!isLoading && session?.userId) {
+            saveToIndexedDB(user);
+        }
+    }, [user, isLoading, session?.userId, saveToIndexedDB]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Actions
     const setName = (name: string) => setUser(prev => ({ ...prev, name }));
@@ -222,14 +277,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const skipDay = () => {
-        // Skip without breaking streak (for Meera persona)
         setUser(prev => ({
             ...prev,
             currentDay: Math.min(prev.currentDay + 1, 30),
         }));
     };
 
-    // NEW: Save reflection with journal entry
     const saveReflection = (entry: { day: number; mood?: string; journal: string; date: string }) => {
         setUser(prev => ({
             ...prev,
@@ -237,12 +290,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }));
     };
 
-    // NEW: Generic complete session function
     const completeSession = (type: 'meditation' | 'reflection' | 'task' | 'moodCheckin') => {
         updateTodaySession({ [type]: true });
     };
 
-    // NEW: Advance to next day after completing all tasks
     const advanceDay = () => {
         setUser(prev => {
             const newDay = Math.min(prev.currentDay + 1, 30);
@@ -254,13 +305,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
     };
 
-    // Pause mode
     const activatePause = (): boolean => {
         if (user.pauseTokens <= 0) return false;
-
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
-
         setUser(prev => ({
             ...prev,
             pauseTokens: prev.pauseTokens - 1,
@@ -270,11 +318,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
     };
 
-    // Toggles
     const toggleNightMode = () => setUser(prev => ({ ...prev, nightMode: !prev.nightMode }));
     const toggleShortSession = () => setUser(prev => ({ ...prev, shortSessionMode: !prev.shortSessionMode }));
 
-    // Favorites
     const toggleFavorite = (day: number) => {
         setUser(prev => ({
             ...prev,
@@ -285,7 +331,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     const isFavorite = (day: number): boolean => user.favoriteDays.includes(day);
 
-    // Helpers
     const getCurrentBlock = (): 1 | 2 | 3 => {
         if (user.currentDay <= 10) return 1;
         if (user.currentDay <= 20) return 2;
@@ -310,9 +355,23 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return user.sessionCompletions.find(s => s.day === user.currentDay);
     };
 
+    // Logout actions
+    const logout = async () => {
+        authLogout();
+        // State reset handled by useEffect when session becomes null
+    };
+
+    const clearProgressAndLogout = async () => {
+        if (session?.userId) {
+            await progressService.clearProgress(session.userId);
+        }
+        authLogout();
+    };
+
     return (
         <UserContext.Provider value={{
             user,
+            isLoading,
             setName,
             setPersona,
             setAvatar,
@@ -336,6 +395,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             getDaysInBlock,
             getWeeklyMoodAverage,
             getTodayCompletion,
+            logout,
+            clearProgressAndLogout,
         }}>
             {children}
         </UserContext.Provider>

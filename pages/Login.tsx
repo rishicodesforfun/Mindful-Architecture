@@ -1,32 +1,63 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from '../context/UserContext';
+import { useAuth } from '../context/AuthContext';
 import MentamindBranding from '../components/MentamindBranding';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
-    const { setName, user } = useUser();
-    const [name, setNameInput] = useState('');
+    const { login, isAuthenticated } = useAuth();
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/home');
+        }
+    }, [isAuthenticated, navigate]);
+
+    const [formData, setFormData] = useState({
+        username: '',
+        password: '',
+    });
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleContinue = () => {
-        if (name.trim()) {
-            setIsLoading(true);
-            setName(name.trim());
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
 
-            // Short delay for smooth transition
-            setTimeout(() => {
-                if (user.hasCompletedOnboarding) {
-                    navigate('/home');
+        if (!formData.username.trim() || !formData.password) {
+            setError('Please enter your username and password');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const result = await login(formData.username.trim(), formData.password);
+
+            if (result.success) {
+                // Determine redirect path - could be based on onboarding status if we had that check here
+                // For now, default to home
+                navigate('/home');
+            } else {
+                if (result.error === 'USER_NOT_FOUND') {
+                    setError('User not found. Please sign up first.');
+                } else if (result.error === 'INVALID_PASSWORD') {
+                    setError('Incorrect password. Please try again.');
                 } else {
-                    navigate('/onboarding');
+                    setError('Login failed. Please try again.');
                 }
-            }, 600);
+            }
+        } catch (err) {
+            setError('An error occurred during login');
+            console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] overflow-hidden px-8 transition-colors duration-300">
+        <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#F5F7F4] dark:bg-[#0B1121] font-['Epilogue'] overflow-hidden px-8 transition-colors duration-300">
 
             {/* Soft ambient background */}
             <div className="absolute inset-0 pointer-events-none">
@@ -35,57 +66,78 @@ const Login: React.FC = () => {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 w-full max-w-sm flex flex-col items-center text-center">
+            <div className="relative z-10 w-full max-w-sm">
 
-                {/* App Icon */}
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#37a49f] to-[#2b5664] flex items-center justify-center shadow-xl shadow-[#37a49f]/20 mb-8 animate-float">
-                    <span className="material-symbols-outlined text-white text-[40px]">self_improvement</span>
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#37a49f] to-[#2b5664] flex items-center justify-center shadow-xl shadow-[#37a49f]/20 mb-6 mx-auto animate-float">
+                        <span className="material-symbols-outlined text-white text-[40px]">self_improvement</span>
+                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight mb-2 text-[#111618] dark:text-white">
+                        Welcome Back
+                    </h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed">
+                        Continue your journey to inner peace
+                    </p>
                 </div>
 
-                {/* Welcome Text */}
-                <h1 className="text-3xl font-bold tracking-tight mb-2 text-[#111618] dark:text-white">
-                    Welcome
-                </h1>
-                <p className="text-gray-500 dark:text-gray-400 text-base mb-10 leading-relaxed">
-                    Let's begin your journey to inner peace.
-                </p>
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <input
+                            type="text"
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                            placeholder="Username"
+                            autoComplete="username"
+                            autoFocus
+                            className="w-full px-6 py-4 rounded-2xl bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 text-lg text-[#111618] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#37a49f]/30 focus:border-[#37a49f] dark:focus:border-teal-500 shadow-sm dark:shadow-none transition-all"
+                        />
+                    </div>
 
-                {/* Name Input */}
-                <div className="w-full mb-6">
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setNameInput(e.target.value)}
-                        placeholder="What should we call you?"
-                        className="w-full px-6 py-4 rounded-2xl bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 text-center text-lg font-medium text-[#111618] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#37a49f]/30 focus:border-[#37a49f] dark:focus:border-teal-500 shadow-sm dark:shadow-none transition-all"
-                        autoFocus
-                    />
-                </div>
+                    <div>
+                        <input
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            placeholder="Password"
+                            autoComplete="current-password"
+                            className="w-full px-6 py-4 rounded-2xl bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 text-lg text-[#111618] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#37a49f]/30 focus:border-[#37a49f] dark:focus:border-teal-500 shadow-sm dark:shadow-none transition-all"
+                        />
+                    </div>
 
-                {/* Continue Button */}
-                <button
-                    onClick={handleContinue}
-                    disabled={!name.trim() || isLoading}
-                    className={`w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${name.trim()
-                        ? 'bg-[#37a49f] text-white shadow-lg shadow-[#37a49f]/25 hover:shadow-[#37a49f]/40 active:scale-[0.98]'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                        }`}
-                >
-                    {isLoading ? (
-                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                        <>
-                            Continue
-                            <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-                        </>
+                    {error && (
+                        <p className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/10 py-2 rounded-xl">{error}</p>
                     )}
-                </button>
 
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-8">
-                    Your progress stays private on your device.
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full py-4 rounded-2xl bg-[#37a49f] text-white font-bold text-lg shadow-lg shadow-[#37a49f]/25 hover:shadow-[#37a49f]/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    >
+                        {isLoading ? (
+                            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                Sign In
+                                <span className="material-symbols-outlined text-[20px]">login</span>
+                            </>
+                        )}
+                    </button>
+                </form>
+
+                {/* Signup Link */}
+                <p className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
+                    Don't have an account?{' '}
+                    <button
+                        onClick={() => navigate('/signup')}
+                        className="text-[#37a49f] font-bold hover:underline"
+                    >
+                        Start Journey
+                    </button>
                 </p>
 
-                {/* Mentamind Branding */}
+                {/* Footer */}
                 <div className="mt-12">
                     <MentamindBranding variant="footer" />
                 </div>

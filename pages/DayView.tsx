@@ -12,6 +12,7 @@ const DayView: React.FC = () => {
 
     const day = parseInt(dayNum || '1', 10);
     const content = getDayContent(day);
+    console.log('[DEBUG] DayView Content:', { day, title: content?.task.title, image: content?.task.image });
     const blockInfo = getBlockInfo(content?.block || 1);
     const todayCompletion = getTodayCompletion();
 
@@ -82,19 +83,29 @@ const DayView: React.FC = () => {
 
                         {/* Illustration Section */}
                         <div className={`relative h-64 w-full ${isDark ? 'bg-[#0c111c]' : 'bg-[#F2F7F6]'} flex items-center justify-center overflow-hidden`}>
-                            {/* Decorative circles */}
-                            <div className={`absolute top-0 right-0 h-32 w-32 translate-x-10 -translate-y-10 rounded-full ${isDark ? 'bg-blue-500/10' : 'bg-[#3D6B5B]/10'}`} />
-                            <div className={`absolute bottom-0 left-0 h-40 w-40 -translate-x-10 translate-y-10 rounded-full ${isDark ? 'bg-indigo-500/10' : 'bg-[#E2B19F]/20'}`} />
+                            {content.task.image ? (
+                                <img
+                                    src={content.task.image}
+                                    alt={content.task.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <>
+                                    {/* Decorative circles */}
+                                    <div className={`absolute top-0 right-0 h-32 w-32 translate-x-10 -translate-y-10 rounded-full ${isDark ? 'bg-blue-500/10' : 'bg-[#3D6B5B]/10'}`} />
+                                    <div className={`absolute bottom-0 left-0 h-40 w-40 -translate-x-10 translate-y-10 rounded-full ${isDark ? 'bg-indigo-500/10' : 'bg-[#E2B19F]/20'}`} />
 
-                            {/* Icon Illustration */}
-                            <div className={`relative z-10 w-32 h-32 rounded-full ${isDark ? 'bg-[#3D6B5B]/20' : 'bg-[#3D6B5B]/10'} flex items-center justify-center`}>
-                                <span className={`material-symbols-outlined text-[#3D6B5B] text-[64px]`}>
-                                    {content.task.icon}
-                                </span>
-                            </div>
+                                    {/* Icon Illustration */}
+                                    <div className={`relative z-10 w-32 h-32 rounded-full ${isDark ? 'bg-[#3D6B5B]/20' : 'bg-[#3D6B5B]/10'} flex items-center justify-center`}>
+                                        <span className={`material-symbols-outlined text-[#3D6B5B] text-[64px]`}>
+                                            {content.task.icon}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
 
                             {/* Bottom gradient fade */}
-                            <div className={`absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t ${isDark ? 'from-[#151E32]' : 'from-white'} to-transparent`} />
+                            <div className={`absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t ${isDark ? 'from-[#151E32]' : 'from-white'} to-transparent opacity-80`} />
                         </div>
 
                         {/* Content */}

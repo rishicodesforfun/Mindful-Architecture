@@ -45,24 +45,72 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/onboarding" element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          } />
 
           {/* Main App - Sitemap Pages */}
-          <Route path="/home" element={<Home />} />
-          <Route path="/programs" element={<Programs />} />
-          <Route path="/daily-session" element={<Player />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/journal" element={<Reflection />} />
-          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/home" element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          } />
+          <Route path="/programs" element={
+            <ProtectedRoute>
+              <Programs />
+            </ProtectedRoute>
+          } />
+          <Route path="/daily-session" element={
+            <ProtectedRoute>
+              <Player />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/journal" element={
+            <ProtectedRoute>
+              <Reflection />
+            </ProtectedRoute>
+          } />
+          <Route path="/pricing" element={
+            <ProtectedRoute>
+              <Pricing />
+            </ProtectedRoute>
+          } />
 
           {/* 30-Day Journey */}
-          <Route path="/journey" element={<Journey />} />
-          <Route path="/day/:dayNum" element={<DayView />} />
+          <Route path="/journey" element={
+            <ProtectedRoute>
+              <Journey />
+            </ProtectedRoute>
+          } />
+          <Route path="/day/:dayNum" element={
+            <ProtectedRoute>
+              <DayView />
+            </ProtectedRoute>
+          } />
 
           {/* Additional Pages */}
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/task" element={<Task />} />
-          <Route path="/library" element={<Library />} />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/task" element={
+            <ProtectedRoute>
+              <Task />
+            </ProtectedRoute>
+          } />
+          <Route path="/library" element={
+            <ProtectedRoute>
+              <Library />
+            </ProtectedRoute>
+          } />
 
           {/* Legacy routes - redirect */}
           <Route path="/player" element={<Navigate to="/daily-session" replace />} />
@@ -73,13 +121,37 @@ const AppContent: React.FC = () => {
   );
 };
 
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F7F4] dark:bg-[#0B1121]">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#37a49f] to-[#2b5664] flex items-center justify-center animate-pulse">
+          <span className="material-symbols-outlined text-white text-[32px]">self_improvement</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   return (
-    <UserProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </UserProvider>
+    <AuthProvider>
+      <UserProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </UserProvider>
+    </AuthProvider>
   );
 };
 

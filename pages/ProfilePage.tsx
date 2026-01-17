@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
+import LogoutModal from '../components/LogoutModal';
 import { useUser, AvatarId } from '../context/UserContext';
 import MentamindBranding from '../components/MentamindBranding';
 
@@ -23,11 +24,12 @@ const personaInfo = {
 
 const ProfilePage: React.FC = () => {
     const navigate = useNavigate();
-    const { user, setName, setAvatar, activatePause, toggleNightMode, toggleShortSession } = useUser();
+    const { user, setName, setAvatar, activatePause, toggleNightMode, toggleShortSession, logout, clearProgressAndLogout } = useUser();
 
     const [showEditModal, setShowEditModal] = useState(false);
     const [showAvatarModal, setShowAvatarModal] = useState(false);
     const [showSoundModal, setShowSoundModal] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [editName, setEditName] = useState(user.name);
 
     const handleSaveName = () => {
@@ -233,10 +235,7 @@ const ProfilePage: React.FC = () => {
             {/* Sign Out */}
             <div className="mx-6 mb-8">
                 <button
-                    onClick={() => {
-                        localStorage.clear();
-                        navigate('/');
-                    }}
+                    onClick={() => setShowLogoutModal(true)}
                     className="w-full py-4 text-center text-red-500 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
                 >
                     Sign Out
@@ -337,6 +336,23 @@ const ProfilePage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Logout Modal */}
+            <LogoutModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onKeepProgress={async () => {
+                    await logout();
+                    setShowLogoutModal(false);
+                    navigate('/');
+                }}
+                onClearProgress={async () => {
+                    await clearProgressAndLogout();
+                    setShowLogoutModal(false);
+                    navigate('/');
+                }}
+                userName={user.name}
+            />
         </div>
     );
 };

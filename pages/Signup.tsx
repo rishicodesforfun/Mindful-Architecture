@@ -1,29 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useUser } from '../context/UserContext';
+import { useAuth } from '../context/AuthContext';
 import MentamindBranding from '../components/MentamindBranding';
 
 const Signup: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { setName, completeOnboarding } = useUser();
+    const { signup, isAuthenticated } = useAuth();
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/home');
+        }
+    }, [isAuthenticated, navigate]);
 
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
+        username: '',
         password: '',
+        confirmPassword: '',
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
     const plan = searchParams.get('plan') || 'free';
-    const billing = searchParams.get('billing') || 'yearly';
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
+        if (!formData.username.trim() || !formData.password || !formData.confirmPassword) {
             setError('Please fill in all fields');
             return;
         }
@@ -33,20 +39,35 @@ const Signup: React.FC = () => {
             return;
         }
 
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
         setIsLoading(true);
 
-        // Simulate signup - in production this would hit an API
-        setTimeout(() => {
-            setName(formData.name.trim());
+        try {
+            const result = await signup({
+                username: formData.username.trim(),
+                password: formData.password,
+            });
 
-            // If paid plan, would redirect to payment here
-            if (plan !== 'free') {
-                // In production: redirect to Stripe checkout
-                console.log(`Redirect to payment for ${plan} (${billing})`);
+            if (result.success) {
+                navigate('/onboarding');
+            } else {
+                if (result.error === 'USERNAME_EXISTS') {
+                    setError('That username is already taken');
+                } else {
+                    // Show debug message if available, otherwise generic
+                    setError(result.debugMessage || 'An error occurred. Please try again.');
+                }
             }
-
-            navigate('/onboarding');
-        }, 800);
+        } catch (err: any) {
+            setError('Failed to create account');
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -76,7 +97,7 @@ const Signup: React.FC = () => {
                         Create Account
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        {plan === 'free' ? 'Start your 7-day free trial' : `Sign up for ${plan} plan`}
+                        {plan === 'free' ? 'Start your local journey' : `Sign up for ${plan} plan`}
                     </p>
                 </div>
 
@@ -85,19 +106,10 @@ const Signup: React.FC = () => {
                     <div>
                         <input
                             type="text"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="Your name"
-                            className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 text-[#111618] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#37a49f]/30 focus:border-[#37a49f] transition-all"
-                        />
-                    </div>
-
-                    <div>
-                        <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            placeholder="Email address"
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                            placeholder="Username"
+                            autoComplete="username"
                             className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 text-[#111618] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#37a49f]/30 focus:border-[#37a49f] transition-all"
                         />
                     </div>
@@ -108,12 +120,24 @@ const Signup: React.FC = () => {
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             placeholder="Create password"
+                            autoComplete="new-password"
+                            className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 text-[#111618] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#37a49f]/30 focus:border-[#37a49f] transition-all"
+                        />
+                    </div>
+
+                    <div>
+                        <input
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                            placeholder="Confirm password"
+                            autoComplete="new-password"
                             className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-[#161B22] border border-gray-100 dark:border-white/10 text-[#111618] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#37a49f]/30 focus:border-[#37a49f] transition-all"
                         />
                     </div>
 
                     {error && (
-                        <p className="text-red-500 text-sm text-center">{error}</p>
+                        <p className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/10 py-2 rounded-xl">{error}</p>
                     )}
 
                     <button
@@ -125,7 +149,7 @@ const Signup: React.FC = () => {
                             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
                             <>
-                                {plan === 'free' ? 'Start Free Trial' : 'Continue to Payment'}
+                                Start Journey
                                 <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                             </>
                         )}
@@ -143,9 +167,9 @@ const Signup: React.FC = () => {
                     </button>
                 </p>
 
-                {/* Terms */}
+                {/* Security Note */}
                 <p className="text-center mt-6 text-xs text-gray-400 dark:text-gray-500">
-                    By signing up, you agree to our Terms of Service and Privacy Policy
+                    Your data is stored securely on your device.
                 </p>
 
                 <div className="mt-8">
