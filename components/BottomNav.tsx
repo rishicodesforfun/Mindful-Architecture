@@ -20,8 +20,8 @@ const BottomNav: React.FC = () => {
   const getColors = (path: string) => {
     const active = isActive(path);
     return active
-      ? 'text-[#389485]'
-      : 'text-gray-400 dark:text-gray-600 hover:text-[#389485] dark:hover:text-[#389485]';
+      ? 'text-[#3D6B5B] dark:text-[#4FD1C5]'
+      : 'text-gray-400 dark:text-gray-600 hover:text-[#3D6B5B] dark:hover:text-[#4FD1C5]';
   };
 
   return (

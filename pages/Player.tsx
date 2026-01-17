@@ -159,7 +159,7 @@ const Player: React.FC = () => {
           <h1 className={`text-3xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
             {selectedSession.title}
           </h1>
-          <p className={`text-sm mt-2 ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'} font-medium`}>
+          <p className={`text-sm mt-2 ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'} font-medium`}>
             DAY {viewingDay.toString().padStart(2, '0')} • {selectedSession.duration} MIN
           </p>
           {dayContent && (
@@ -184,7 +184,7 @@ const Player: React.FC = () => {
               <circle
                 cx="50" cy="50" r="45"
                 fill="none"
-                stroke={isDark ? '#5EEAD4' : '#4b9b87'}
+                stroke={isDark ? '#4FD1C5' : '#3D6B5B'}
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeDasharray="283"
@@ -196,7 +196,7 @@ const Player: React.FC = () => {
                 cx={50 + 45 * Math.cos((progressPercent / 100 * 360 - 90) * Math.PI / 180)}
                 cy={50 + 45 * Math.sin((progressPercent / 100 * 360 - 90) * Math.PI / 180)}
                 r="4"
-                fill={isDark ? '#5EEAD4' : '#4b9b87'}
+                fill={isDark ? '#4FD1C5' : '#3D6B5B'}
               />
             </svg>
 
@@ -209,7 +209,7 @@ const Player: React.FC = () => {
                 }`}
             >
               <span
-                className={`material-symbols-outlined text-[56px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}
+                className={`material-symbols-outlined text-[56px] ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}
                 style={{ fontVariationSettings: "'FILL' 1" }}
               >
                 {isPlaying ? 'pause' : 'play_arrow'}
@@ -243,7 +243,7 @@ const Player: React.FC = () => {
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${i === breathPhase && isPlaying
-                  ? isDark ? 'bg-[#5EEAD4] scale-125' : 'bg-[#4b9b87] scale-125'
+                  ? isDark ? 'bg-[#4FD1C5] scale-125' : 'bg-[#3D6B5B] scale-125'
                   : isDark ? 'bg-white/20' : 'bg-gray-300'
                   }`}
               />
@@ -255,7 +255,7 @@ const Player: React.FC = () => {
         <div className={`relative z-10 px-6 pb-12 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#fafaf9]/90'} backdrop-blur-sm`}>
           <button
             onClick={handleMarkAsDone}
-            className="w-full py-4 rounded-2xl bg-[#389485] text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-[#389485]/25 hover:shadow-[#389485]/40 transition-all active:scale-[0.98]"
+            className="w-full py-4 rounded-2xl bg-[#3D6B5B] text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-[#3D6B5B]/25 hover:shadow-[#3D6B5B]/40 transition-all active:scale-[0.98]"
           >
             <span className="material-symbols-outlined text-[20px]">check_circle</span>
             I'm Done for Today
@@ -275,7 +275,7 @@ const Player: React.FC = () => {
 
   // Session selection view - Day specific
   return (
-    <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1015]' : 'bg-[#fafafa]'
+    <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'
       } font-['Epilogue'] pb-24`}>
 
       {/* Header */}

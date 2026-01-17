@@ -53,7 +53,7 @@ const ProfilePage: React.FC = () => {
     const currentPersona = user.persona ? personaInfo[user.persona] : null;
 
     return (
-        <div className="relative flex h-full min-h-screen w-full flex-col bg-[#fafafa] dark:bg-[#0B1015] text-[#111618] dark:text-gray-100 font-['Epilogue'] pb-24 overflow-y-auto no-scrollbar transition-colors duration-300">
+        <div className="relative flex h-full min-h-screen w-full flex-col bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] pb-24 overflow-y-auto no-scrollbar transition-colors duration-300">
 
             {/* Header */}
             <header className="px-6 pt-10 pb-2">
@@ -122,8 +122,8 @@ const ProfilePage: React.FC = () => {
                         onClick={handleUsePauseToken}
                         disabled={user.pauseTokens === 0}
                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${user.pauseTokens > 0
-                                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25 hover:shadow-amber-500/40'
-                                : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                            ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25 hover:shadow-amber-500/40'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                             }`}
                     >
                         Use
@@ -144,8 +144,8 @@ const ProfilePage: React.FC = () => {
                         <div
                             key={i}
                             className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${badge.unlocked
-                                    ? 'bg-white dark:bg-[#161B22] shadow-sm ring-1 ring-black/5 dark:ring-white/5'
-                                    : 'bg-gray-100 dark:bg-gray-800/50 opacity-40'
+                                ? 'bg-white dark:bg-[#161B22] shadow-sm ring-1 ring-black/5 dark:ring-white/5'
+                                : 'bg-gray-100 dark:bg-gray-800/50 opacity-40'
                                 }`}
                         >
                             <span className="text-2xl">{badge.icon}</span>
@@ -293,8 +293,8 @@ const ProfilePage: React.FC = () => {
                                     key={avatar.id}
                                     onClick={() => handleSelectAvatar(avatar.id)}
                                     className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all ${user.avatar === avatar.id
-                                            ? 'ring-2 ring-[#37a49f] ring-offset-2 dark:ring-offset-[#161B22] bg-[#37a49f]/5'
-                                            : 'hover:bg-gray-50 dark:hover:bg-white/5'
+                                        ? 'ring-2 ring-[#37a49f] ring-offset-2 dark:ring-offset-[#161B22] bg-[#37a49f]/5'
+                                        : 'hover:bg-gray-50 dark:hover:bg-white/5'
                                         }`}
                                 >
                                     <div className={`w-16 h-16 rounded-full ${avatar.bg} flex items-center justify-center text-3xl`}>

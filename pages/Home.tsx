@@ -38,7 +38,7 @@ const Home: React.FC = () => {
   const weekDates = getWeekDates();
 
   return (
-    <div className="relative min-h-screen bg-[#fafafa] dark:bg-[#0B1015] font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300">
+    <div className="relative min-h-screen bg-[#F5F7F4] dark:bg-[#0B1121] font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300">
 
       {/* Logo Watermark Background */}
       <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -49,7 +49,7 @@ const Home: React.FC = () => {
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Your Journey</p>
             <h1 className="text-3xl font-bold text-[#111818] dark:text-white">
-              Day <span className="text-[#2b5664] dark:text-[#5eead4]">{user.currentDay}</span> of 30
+              Day <span className="text-[#2B4D41] dark:text-[#4FD1C5]">{user.currentDay}</span> of 30
             </h1>
           </div>
 
@@ -72,13 +72,13 @@ const Home: React.FC = () => {
             <div
               key={i}
               className={`flex flex-col items-center py-2 px-3 rounded-xl transition-all ${d.isToday
-                  ? 'bg-[#2b5664] dark:bg-[#5eead4] text-white dark:text-[#0B1015]'
-                  : d.isPast
-                    ? 'text-gray-400 dark:text-gray-600'
-                    : 'text-gray-600 dark:text-gray-400'
+                ? 'bg-[#2B4D41] dark:bg-[#4FD1C5] text-white dark:text-[#0B1121]'
+                : d.isPast
+                  ? 'text-gray-400 dark:text-gray-600'
+                  : 'text-gray-600 dark:text-gray-400'
                 }`}
             >
-              <span className={`text-xs font-medium ${d.isToday ? 'text-white/80 dark:text-[#0B1015]/80' : ''}`}>
+              <span className={`text-xs font-medium ${d.isToday ? 'text-white/80 dark:text-[#0B1121]/80' : ''}`}>
                 {d.day}
               </span>
               <span className={`text-lg font-bold ${d.isToday ? '' : ''}`}>
@@ -96,19 +96,19 @@ const Home: React.FC = () => {
         <div
           onClick={() => navigate('/player')}
           className={`relative overflow-hidden rounded-3xl p-5 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${todayCompletion?.meditation
-              ? 'bg-[#e8f5f3] dark:bg-[#0d3d3d] ring-2 ring-[#4b9b87]'
-              : 'bg-gradient-to-br from-[#e8f5f3] to-white dark:from-[#0d3d3d] dark:to-[#0B1015]'
+            ? 'bg-[#e8f5f3] dark:bg-[#0d3d3d] ring-2 ring-[#3D6B5B]'
+            : 'bg-gradient-to-br from-[#e8f5f3] to-white dark:from-[#0d3d3d] dark:to-[#0B1121]'
             }`}
         >
           <div className="flex items-center gap-4">
             <div className="flex-1">
               {/* Badge */}
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#4b9b87]/10 dark:bg-[#5eead4]/20 mb-2">
-                <span className="material-symbols-outlined text-[14px] text-[#4b9b87] dark:text-[#5eead4]">spa</span>
-                <span className="text-xs font-bold text-[#4b9b87] dark:text-[#5eead4]">Meditation</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#3D6B5B]/10 dark:bg-[#4FD1C5]/20 mb-2">
+                <span className="material-symbols-outlined text-[14px] text-[#3D6B5B] dark:text-[#4FD1C5]">spa</span>
+                <span className="text-xs font-bold text-[#3D6B5B] dark:text-[#4FD1C5]">Meditation</span>
               </div>
 
-              <h3 className="text-xl font-bold text-[#111818] dark:text-white mb-1">
+              <h3 className="text-xl font-bold text-[#2C3E35] dark:text-white mb-1">
                 {todayContent?.meditation.title || 'Morning Clarity'}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
@@ -139,8 +139,8 @@ const Home: React.FC = () => {
         <div
           onClick={() => navigate('/reflection')}
           className={`relative overflow-hidden rounded-3xl p-5 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${todayCompletion?.reflection
-              ? 'bg-[#fff5f3] dark:bg-[#3d1f1f] ring-2 ring-[#e57373]'
-              : 'bg-gradient-to-br from-[#fff5f3] to-white dark:from-[#3d1f1f] dark:to-[#0B1015]'
+            ? 'bg-[#fff5f3] dark:bg-[#3d1f1f] ring-2 ring-[#e57373]'
+            : 'bg-gradient-to-br from-[#fff5f3] to-white dark:from-[#3d1f1f] dark:to-[#0B1015]'
             }`}
         >
           <div className="flex items-center gap-4">
@@ -176,8 +176,8 @@ const Home: React.FC = () => {
         <div
           onClick={() => navigate('/task')}
           className={`relative overflow-hidden rounded-3xl p-5 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${todayCompletion?.task
-              ? 'bg-[#eff6ff] dark:bg-[#1e2a4a] ring-2 ring-[#60a5fa]'
-              : 'bg-gradient-to-br from-[#eff6ff] to-white dark:from-[#1e2a4a] dark:to-[#0B1015]'
+            ? 'bg-[#eff6ff] dark:bg-[#1e2a4a] ring-2 ring-[#60a5fa]'
+            : 'bg-gradient-to-br from-[#eff6ff] to-white dark:from-[#1e2a4a] dark:to-[#0B1015]'
             }`}
         >
           <div className="flex items-center gap-4">
@@ -244,6 +244,117 @@ const Home: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* 7-Day Mood Trends */}
+        <section className="mt-6">
+          <h2 className="text-lg font-bold text-[#111818] dark:text-white mb-4">Your Mood This Week</h2>
+          <div className="bg-white dark:bg-[#161B22] rounded-2xl p-5 shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-800">
+            {/* Mood Chart */}
+            <div className="flex items-end justify-between gap-2 h-24 mb-4">
+              {(() => {
+                const last7Days = Array.from({ length: 7 }, (_, i) => {
+                  const dayNum = user.currentDay - 6 + i;
+                  if (dayNum < 1) return { day: dayNum, mood: 0, label: '' };
+                  const mood = user.moodHistory.find(m => m.day === dayNum);
+                  const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                  const date = new Date();
+                  date.setDate(date.getDate() - (6 - i));
+                  return {
+                    day: dayNum,
+                    mood: mood?.mood || 0,
+                    label: dayNames[date.getDay()],
+                    isToday: i === 6
+                  };
+                });
+
+                return last7Days.map((d, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className={`w-full rounded-t-lg transition-all ${d.mood === 0
+                      ? 'bg-gray-100 dark:bg-gray-800'
+                      : d.mood >= 4
+                        ? 'bg-gradient-to-t from-[#4b9b87] to-[#5EEAD4]'
+                        : d.mood === 3
+                          ? 'bg-yellow-400 dark:bg-yellow-600'
+                          : 'bg-orange-400 dark:bg-orange-600'
+                      }`} style={{
+                        height: d.mood === 0 ? '16px' : `${(d.mood / 5) * 100}%`,
+                        minHeight: '16px'
+                      }}>
+                      {d.mood > 0 && (
+                        <div className="w-full flex items-start justify-center pt-0.5">
+                          <span className="text-[10px]">
+                            {d.mood === 5 ? '😊' : d.mood === 4 ? '🙂' : d.mood === 3 ? '😐' : d.mood === 2 ? '😔' : '😫'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <span className={`text-[10px] font-medium ${d.isToday
+                      ? 'text-[#4b9b87] dark:text-[#5eead4]'
+                      : 'text-gray-400 dark:text-gray-500'
+                      }`}>
+                      {d.label}
+                    </span>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {user.moodHistory.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center">
+                Complete mood check-ins to see your trends
+              </p>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Avg: {(user.moodHistory.slice(-7).reduce((a, m) => a + m.mood, 0) / Math.max(user.moodHistory.slice(-7).length, 1)).toFixed(1)}/5
+                </span>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="text-sm font-medium text-[#4b9b87] dark:text-[#5eead4]"
+                >
+                  See Details →
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Favorites Quick Access */}
+        {user.favoriteDays.length > 0 && (
+          <section className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-[#111818] dark:text-white flex items-center gap-2">
+                <span className="material-symbols-outlined text-red-500 text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+                Your Favorites
+              </h2>
+              <button
+                onClick={() => navigate('/library')}
+                className="text-sm font-medium text-[#4b9b87] dark:text-[#5eead4]"
+              >
+                View All →
+              </button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {user.favoriteDays.slice(0, 3).map((dayNum) => {
+                const dayContent = getDayContent(dayNum);
+                if (!dayContent) return null;
+                return (
+                  <div
+                    key={dayNum}
+                    onClick={() => navigate(`/day/${dayNum}`)}
+                    className="min-w-[140px] bg-white dark:bg-[#161B22] rounded-2xl p-4 shadow-sm dark:shadow-none border border-red-100 dark:border-red-900/30 cursor-pointer hover:shadow-md transition-all"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-2">
+                      <span className="material-symbols-outlined text-red-500 text-[16px]">spa</span>
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Day {dayNum}</p>
+                    <p className="font-bold text-sm text-[#111818] dark:text-white truncate">{dayContent.title}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
 
       <BottomNav />

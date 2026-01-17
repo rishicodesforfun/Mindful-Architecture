@@ -90,12 +90,12 @@ const Programs: React.FC = () => {
     };
 
     return (
-        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1015]' : 'bg-[#fafafa]'} font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
+        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
 
             <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
             {/* Header */}
-            <header className={`sticky top-0 z-30 px-6 pt-12 pb-4 ${isDark ? 'bg-[#0B1015]/90' : 'bg-[#fafafa]/90'} backdrop-blur-xl`}>
+            <header className={`sticky top-0 z-30 px-6 pt-12 pb-4 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'} backdrop-blur-xl`}>
                 <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                     Programs
                 </h1>

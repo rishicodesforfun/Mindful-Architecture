@@ -74,7 +74,7 @@ const Onboarding: React.FC = () => {
   ];
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col bg-[#fafafa] dark:bg-[#0B1015] text-[#111618] dark:text-gray-100 font-['Epilogue'] overflow-hidden transition-colors duration-300">
+    <div className="relative flex min-h-screen w-full flex-col bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] overflow-hidden transition-colors duration-300">
 
       {/* Soft background */}
       <div className="absolute inset-0 pointer-events-none">

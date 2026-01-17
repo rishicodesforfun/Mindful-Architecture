@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider, useUser } from './context/UserContext';
+import { useDevice } from './hooks/useDevice';
 
 // Pages - matching sitemap
 import Login from './pages/Login';
@@ -20,13 +21,21 @@ import DayView from './pages/DayView';
 
 const AppContent: React.FC = () => {
   const { user } = useUser();
+  const device = useDevice();
 
   // Apply dark mode class for Tailwind dark: variant support
   const darkModeClass = user.nightMode ? 'dark' : '';
 
+  // Responsive container widths - desktop uses full width
+  const containerWidth = device.isMobile
+    ? 'w-full'
+    : device.isTablet
+      ? 'w-full max-w-[768px] mx-auto'
+      : 'w-full'; // Desktop: full width
+
   return (
-    <div className={`${darkModeClass} w-full h-full min-h-screen`}>
-      <div className="w-full h-full min-h-screen bg-[#fafafa] dark:bg-[#0B1015] text-slate-900 dark:text-gray-100 font-['Epilogue'] mx-auto max-w-[480px] relative shadow-2xl overflow-hidden transition-colors duration-300">
+    <div className={`${darkModeClass} w-full min-h-screen`}>
+      <div className={`${containerWidth} min-h-screen bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] relative transition-colors duration-300`}>
         <Routes>
           {/* ===================== */}
           {/* SITEMAP ROUTES */}

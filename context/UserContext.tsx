@@ -55,6 +55,9 @@ export interface UserState {
     nightMode: boolean;
     shortSessionMode: boolean;
 
+    // Favorites
+    favoriteDays: number[];
+
     // Onboarding
     hasCompletedOnboarding: boolean;
 }
@@ -87,6 +90,10 @@ interface UserContextType {
     toggleNightMode: () => void;
     toggleShortSession: () => void;
 
+    // Favorites
+    toggleFavorite: (day: number) => void;
+    isFavorite: (day: number) => boolean;
+
     // Progress helpers
     getCurrentBlock: () => 1 | 2 | 3;
     getDaysInBlock: () => number;
@@ -111,6 +118,7 @@ const defaultUserState: UserState = {
     pauseExpiresAt: null,
     nightMode: false,
     shortSessionMode: false,
+    favoriteDays: [],
     hasCompletedOnboarding: false,
 };
 
@@ -266,6 +274,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const toggleNightMode = () => setUser(prev => ({ ...prev, nightMode: !prev.nightMode }));
     const toggleShortSession = () => setUser(prev => ({ ...prev, shortSessionMode: !prev.shortSessionMode }));
 
+    // Favorites
+    const toggleFavorite = (day: number) => {
+        setUser(prev => ({
+            ...prev,
+            favoriteDays: prev.favoriteDays.includes(day)
+                ? prev.favoriteDays.filter(d => d !== day)
+                : [...prev.favoriteDays, day]
+        }));
+    };
+    const isFavorite = (day: number): boolean => user.favoriteDays.includes(day);
+
     // Helpers
     const getCurrentBlock = (): 1 | 2 | 3 => {
         if (user.currentDay <= 10) return 1;
@@ -311,6 +330,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             activatePause,
             toggleNightMode,
             toggleShortSession,
+            toggleFavorite,
+            isFavorite,
             getCurrentBlock,
             getDaysInBlock,
             getWeeklyMoodAverage,

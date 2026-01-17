@@ -7,7 +7,7 @@ import { getDayContent, getBlockInfo } from '../data/curriculum';
 const DayView: React.FC = () => {
     const navigate = useNavigate();
     const { dayNum } = useParams<{ dayNum: string }>();
-    const { user, completeSession, getTodayCompletion } = useUser();
+    const { user, completeSession, getTodayCompletion, toggleFavorite, isFavorite } = useUser();
     const isDark = user.nightMode;
 
     const day = parseInt(dayNum || '1', 10);
@@ -44,7 +44,7 @@ const DayView: React.FC = () => {
         <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#fcfcfc]'} font-['Manrope'] overflow-hidden`}>
 
             {/* Ambient backgrounds */}
-            <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#389485]/5 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
+            <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#3D6B5B]/5 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
             <div className="fixed bottom-[10%] right-[-5%] w-[40%] h-[40%] bg-[#E2B19F]/10 dark:bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none z-0" />
 
             {/* Header */}
@@ -56,9 +56,19 @@ const DayView: React.FC = () => {
                     <span className={`material-symbols-outlined ${isDark ? 'text-white' : 'text-[#111817]'}`}>arrow_back</span>
                 </button>
                 <h2 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white/90' : 'text-[#111817]'}`}>
-                    Day {content.day.toString().padStart(2, '0')} <span className="text-[#389485] mx-1">•</span> {content.title}
+                    Day {content.day.toString().padStart(2, '0')} <span className="text-[#3D6B5B] mx-1">•</span> {content.title}
                 </h2>
-                <div className="w-10" />
+                <button
+                    onClick={() => toggleFavorite(day)}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-white/50 hover:bg-white/80'} transition-all active:scale-95`}
+                >
+                    <span
+                        className={`material-symbols-outlined ${isFavorite(day) ? 'text-red-500' : isDark ? 'text-white' : 'text-gray-500'}`}
+                        style={isFavorite(day) ? { fontVariationSettings: "'FILL' 1" } : {}}
+                    >
+                        favorite
+                    </span>
+                </button>
             </header>
 
             <main className="relative z-10 flex flex-1 flex-col items-center px-6 pb-8">
@@ -66,19 +76,19 @@ const DayView: React.FC = () => {
                 {/* Main Task Card */}
                 <div className="group relative w-full max-w-md transform transition-all duration-500 hover:scale-[1.01]">
                     {/* Card shadow */}
-                    <div className={`absolute inset-4 rounded-3xl ${isDark ? 'bg-black/40' : 'bg-[#389485]/20'} blur-2xl transform translate-y-4 opacity-40 group-hover:opacity-50 transition-opacity`} />
+                    <div className={`absolute inset-4 rounded-3xl ${isDark ? 'bg-black/40' : 'bg-[#3D6B5B]/20'} blur-2xl transform translate-y-4 opacity-40 group-hover:opacity-50 transition-opacity`} />
 
                     <div className={`relative flex flex-col overflow-hidden rounded-[2rem] ${isDark ? 'bg-[#151E32] ring-1 ring-white/10' : 'bg-white ring-1 ring-black/5'} shadow-xl`}>
 
                         {/* Illustration Section */}
                         <div className={`relative h-64 w-full ${isDark ? 'bg-[#0c111c]' : 'bg-[#F2F7F6]'} flex items-center justify-center overflow-hidden`}>
                             {/* Decorative circles */}
-                            <div className={`absolute top-0 right-0 h-32 w-32 translate-x-10 -translate-y-10 rounded-full ${isDark ? 'bg-blue-500/10' : 'bg-[#389485]/10'}`} />
+                            <div className={`absolute top-0 right-0 h-32 w-32 translate-x-10 -translate-y-10 rounded-full ${isDark ? 'bg-blue-500/10' : 'bg-[#3D6B5B]/10'}`} />
                             <div className={`absolute bottom-0 left-0 h-40 w-40 -translate-x-10 translate-y-10 rounded-full ${isDark ? 'bg-indigo-500/10' : 'bg-[#E2B19F]/20'}`} />
 
                             {/* Icon Illustration */}
-                            <div className={`relative z-10 w-32 h-32 rounded-full ${isDark ? 'bg-[#389485]/20' : 'bg-[#389485]/10'} flex items-center justify-center`}>
-                                <span className={`material-symbols-outlined text-[#389485] text-[64px]`}>
+                            <div className={`relative z-10 w-32 h-32 rounded-full ${isDark ? 'bg-[#3D6B5B]/20' : 'bg-[#3D6B5B]/10'} flex items-center justify-center`}>
+                                <span className={`material-symbols-outlined text-[#3D6B5B] text-[64px]`}>
                                     {content.task.icon}
                                 </span>
                             </div>
@@ -91,7 +101,7 @@ const DayView: React.FC = () => {
                         <div className="flex flex-col gap-5 px-8 pb-8 pt-2">
                             {/* Badge */}
                             <div>
-                                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#389485]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#389485]">
+                                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#3D6B5B]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#3D6B5B]">
                                     <span className="material-symbols-outlined text-[16px]">footprint</span>
                                     <span>Lifestyle Task</span>
                                 </div>
@@ -99,7 +109,7 @@ const DayView: React.FC = () => {
                                 <h1 className={`text-3xl font-extrabold leading-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                                     {content.task.title}
                                 </h1>
-                                <p className="mt-2 text-lg font-medium text-[#389485]">
+                                <p className="mt-2 text-lg font-medium text-[#3D6B5B]">
                                     {content.task.subtitle}
                                 </p>
                             </div>
@@ -124,8 +134,8 @@ const DayView: React.FC = () => {
                                     onClick={handleCompleteTask}
                                     disabled={isTaskComplete}
                                     className={`group/btn relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl py-4 text-white shadow-lg transition-all active:scale-[0.98] ${isTaskComplete
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : 'bg-[#389485] shadow-[#389485]/25 hover:shadow-[#389485]/40 hover:-translate-y-0.5'
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-[#3D6B5B] shadow-[#3D6B5B]/25 hover:shadow-[#3D6B5B]/40 hover:-translate-y-0.5'
                                         }`}
                                 >
                                     <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity group-hover/btn:opacity-100" />
@@ -196,8 +206,8 @@ const DayView: React.FC = () => {
                         onClick={() => day > 1 && navigate(`/day/${day - 1}`)}
                         disabled={day <= 1}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${day <= 1
-                                ? 'opacity-30 cursor-not-allowed'
-                                : isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'
+                            ? 'opacity-30 cursor-not-allowed'
+                            : isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'
                             } ${isDark ? 'text-white' : 'text-gray-700'}`}
                     >
                         <span className="material-symbols-outlined text-[18px]">arrow_back</span>
@@ -215,8 +225,8 @@ const DayView: React.FC = () => {
                         onClick={() => day < 30 && navigate(`/day/${day + 1}`)}
                         disabled={day >= 30}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${day >= 30
-                                ? 'opacity-30 cursor-not-allowed'
-                                : isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'
+                            ? 'opacity-30 cursor-not-allowed'
+                            : isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'
                             } ${isDark ? 'text-white' : 'text-gray-700'}`}
                     >
                         <span className="text-sm font-medium">Day {day + 1}</span>

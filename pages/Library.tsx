@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { useUser } from '../context/UserContext';
+import { getDayContent } from '../data/curriculum';
 import {
   MeditationIllustration,
   SleepCategoryIcon,
@@ -15,11 +16,11 @@ import {
 
 const Library: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, isFavorite, toggleFavorite } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const isDark = user.darkMode;
+  const isDark = user.nightMode;
 
   const categories = [
     { id: 'sleep', title: 'Sleep', subtitle: 'Stories & Sounds', Icon: SleepCategoryIcon },
@@ -45,8 +46,13 @@ const Library: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
+  // Get favorite days content
+  const favoriteDays = user.favoriteDays
+    .map(day => getDayContent(day))
+    .filter(Boolean);
+
   return (
-    <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1015]' : 'bg-[#fafafa]'
+    <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'
       } font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
 
       {/* Logo Watermark */}
@@ -69,9 +75,9 @@ const Library: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full pl-12 pr-4 py-3 rounded-2xl ${isDark
-                ? 'bg-[#161B22] text-white placeholder:text-gray-500 border border-white/5'
-                : 'bg-white text-[#111817] placeholder:text-gray-400 border border-gray-100'
-              } focus:outline-none focus:ring-2 focus:ring-[#4b9b87]/30`}
+              ? 'bg-[#151E32] text-white placeholder:text-gray-500 border border-white/5'
+              : 'bg-white text-[#111817] placeholder:text-gray-400 border border-gray-100'
+              } focus:outline-none focus:ring-2 focus:ring-[#3D6B5B]/30`}
           />
           {searchQuery && (
             <button
@@ -84,6 +90,51 @@ const Library: React.FC = () => {
       </header>
 
       <main className="relative z-10 px-5 pt-4 space-y-8">
+
+        {/* Favorites Section */}
+        {favoriteDays.length > 0 && (
+          <section>
+            <h2 className={`text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${isDark ? 'text-gray-500' : 'text-gray-400'
+              }`}>
+              <span className="material-symbols-outlined text-red-500 text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
+              Your Favorites
+            </h2>
+
+            <div className="space-y-3">
+              {favoriteDays.map((day) => day && (
+                <div
+                  key={day.day}
+                  onClick={() => navigate(`/day/${day.day}`)}
+                  className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all hover:scale-[1.01] ${isDark ? 'bg-[#161B22]' : 'bg-white'
+                    } shadow-sm ring-1 ${isDark ? 'ring-red-500/20' : 'ring-red-100'}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-400 to-red-600`}>
+                    <span className="material-symbols-outlined text-white">spa</span>
+                  </div>
+
+                  <div className="flex-1">
+                    <h3 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                      Day {day.day}: {day.title}
+                    </h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {day.meditation.title} • {day.meditation.duration} min
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(day.day); }}
+                    className="p-2"
+                  >
+                    <span className="material-symbols-outlined text-red-500" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      favorite
+                    </span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Featured Section */}
         <section>
           <h2 className={`text-xs font-bold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-gray-400'
@@ -132,8 +183,8 @@ const Library: React.FC = () => {
                   key={cat.id}
                   onClick={() => setSelectedCategory(isSelected ? null : cat.id)}
                   className={`flex flex-col items-center p-4 rounded-2xl transition-all ${isSelected
-                      ? 'ring-2 ring-[#4b9b87] dark:ring-[#5EEAD4]'
-                      : ''
+                    ? 'ring-2 ring-[#4b9b87] dark:ring-[#5EEAD4]'
+                    : ''
                     } ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm hover:shadow-md`}
                 >
                   <div className="w-16 h-16 mb-2">

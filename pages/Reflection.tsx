@@ -19,7 +19,7 @@ const Reflection: React.FC = () => {
 
     const todayContent = getDayContent(user.currentDay);
     const maxChars = 500;
-    const isDark = user.darkMode;
+    const isDark = user.nightMode;
 
     const moods = [
         { id: 'calm', label: 'Calm', Illustration: CalmMoodIllustration, bgLight: 'bg-blue-50', bgDark: 'bg-blue-950/30' },
@@ -44,7 +44,7 @@ const Reflection: React.FC = () => {
     const personaName = user.persona?.name || 'You';
 
     return (
-        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1015]' : 'bg-[#fafafa]'
+        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'
             } font-['Epilogue'] pb-32 overflow-hidden transition-colors duration-300`}>
 
             {/* Logo Watermark */}
@@ -84,7 +84,7 @@ const Reflection: React.FC = () => {
                     <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                         How did this session
                     </h1>
-                    <p className={`text-2xl font-serif italic ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
+                    <p className={`text-2xl font-serif italic ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
                         make you feel?
                     </p>
                 </div>
@@ -98,8 +98,8 @@ const Reflection: React.FC = () => {
                                 key={mood.id}
                                 onClick={() => setSelectedMood(mood.id)}
                                 className={`flex flex-col items-center justify-center py-6 rounded-2xl transition-all ${isSelected
-                                        ? 'ring-2 ring-[#4b9b87] dark:ring-[#5EEAD4] scale-[1.02]'
-                                        : ''
+                                    ? 'ring-2 ring-[#3D6B5B] dark:ring-[#4FD1C5] scale-[1.02]'
+                                    : ''
                                     } ${isDark ? mood.bgDark : mood.bgLight}`}
                             >
                                 <div className="w-16 h-16 mb-3">
@@ -117,14 +117,14 @@ const Reflection: React.FC = () => {
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-3">
                         <p className={`text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                            Take a moment for yourself, <span className={`font-bold ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>{personaName}</span>.
+                            Take a moment for yourself, <span className={`font-bold ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>{personaName}</span>.
                         </p>
                         <span className={`material-symbols-outlined text-[20px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                             edit_note
                         </span>
                     </div>
 
-                    <div className={`relative rounded-2xl overflow-hidden ${isDark ? 'bg-[#161B22]' : 'bg-gray-50'
+                    <div className={`relative rounded-2xl overflow-hidden ${isDark ? 'bg-[#151E32]' : 'bg-gray-50'
                         }`}>
                         <textarea
                             value={journalText}
@@ -132,8 +132,8 @@ const Reflection: React.FC = () => {
                             placeholder="Write your thoughts here..."
                             rows={5}
                             className={`w-full p-4 bg-transparent resize-none focus:outline-none paper-input ${isDark
-                                    ? 'text-white placeholder:text-gray-500'
-                                    : 'text-[#111817] placeholder:text-gray-400'
+                                ? 'text-white placeholder:text-gray-500'
+                                : 'text-[#111817] placeholder:text-gray-400'
                                 }`}
                         />
                         <div className={`absolute bottom-3 right-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -149,10 +149,10 @@ const Reflection: React.FC = () => {
                     onClick={handleSave}
                     disabled={!selectedMood && !journalText}
                     className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${selectedMood || journalText
-                            ? 'bg-[#4b9b87] text-white shadow-lg shadow-[#4b9b87]/25 hover:shadow-[#4b9b87]/40 active:scale-[0.98]'
-                            : isDark
-                                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        ? 'bg-[#3D6B5B] text-white shadow-lg shadow-[#3D6B5B]/25 hover:shadow-[#3D6B5B]/40 active:scale-[0.98]'
+                        : isDark
+                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
                 >
                     Save Reflection

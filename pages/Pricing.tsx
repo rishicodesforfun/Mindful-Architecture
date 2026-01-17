@@ -74,7 +74,7 @@ const Pricing: React.FC = () => {
     };
 
     return (
-        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1015]' : 'bg-[#fafafa]'} font-['Epilogue'] pb-12 overflow-hidden transition-colors duration-300`}>
+        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-12 overflow-hidden transition-colors duration-300`}>
 
             <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
@@ -99,8 +99,8 @@ const Pricing: React.FC = () => {
                     <button
                         onClick={() => setBillingCycle('monthly')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${billingCycle === 'monthly'
-                                ? isDark ? 'bg-[#5EEAD4] text-[#0B1015]' : 'bg-[#4b9b87] text-white'
-                                : isDark ? 'text-gray-400' : 'text-gray-500'
+                            ? isDark ? 'bg-[#5EEAD4] text-[#0B1015]' : 'bg-[#4b9b87] text-white'
+                            : isDark ? 'text-gray-400' : 'text-gray-500'
                             }`}
                     >
                         Monthly
@@ -108,8 +108,8 @@ const Pricing: React.FC = () => {
                     <button
                         onClick={() => setBillingCycle('yearly')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${billingCycle === 'yearly'
-                                ? isDark ? 'bg-[#5EEAD4] text-[#0B1015]' : 'bg-[#4b9b87] text-white'
-                                : isDark ? 'text-gray-400' : 'text-gray-500'
+                            ? isDark ? 'bg-[#5EEAD4] text-[#0B1015]' : 'bg-[#4b9b87] text-white'
+                            : isDark ? 'text-gray-400' : 'text-gray-500'
                             }`}
                     >
                         Yearly
@@ -123,8 +123,8 @@ const Pricing: React.FC = () => {
                     <div
                         key={plan.id}
                         className={`relative rounded-3xl overflow-hidden ${plan.popular
-                                ? isDark ? 'bg-gradient-to-br from-[#1e3a3a] to-[#161B22] ring-2 ring-[#5EEAD4]' : 'bg-gradient-to-br from-[#e8f5f3] to-white ring-2 ring-[#4b9b87]'
-                                : isDark ? 'bg-[#161B22]' : 'bg-white'
+                            ? isDark ? 'bg-gradient-to-br from-[#1e3a3a] to-[#161B22] ring-2 ring-[#5EEAD4]' : 'bg-gradient-to-br from-[#e8f5f3] to-white ring-2 ring-[#4b9b87]'
+                            : isDark ? 'bg-[#161B22]' : 'bg-white'
                             } shadow-sm`}
                     >
                         {/* Popular badge */}
@@ -175,10 +175,10 @@ const Pricing: React.FC = () => {
                             <button
                                 onClick={() => handleSelectPlan(plan.id)}
                                 className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-[0.98] ${plan.popular
-                                        ? 'bg-[#4b9b87] text-white shadow-lg shadow-[#4b9b87]/25'
-                                        : isDark
-                                            ? 'bg-white/10 text-white hover:bg-white/20'
-                                            : 'bg-gray-100 text-[#111817] hover:bg-gray-200'
+                                    ? 'bg-[#4b9b87] text-white shadow-lg shadow-[#4b9b87]/25'
+                                    : isDark
+                                        ? 'bg-white/10 text-white hover:bg-white/20'
+                                        : 'bg-gray-100 text-[#111817] hover:bg-gray-200'
                                     }`}
                             >
                                 {plan.cta}

@@ -1,68 +1,76 @@
 // Design tokens and theme configuration for Mindful Architecture
-// Matches the HTML theme examples provided
+// Color Palette: Nature-Inspired (Light) + Midnight Blue (Dark)
 
 export const colors = {
-    // Primary palette - teal/sage green
+    // Primary palette - forest green (light) / bright teal (dark)
     primary: {
-        50: '#f0fdfa',
-        100: '#ccfbf1',
-        200: '#99f6e4',
-        300: '#5eead4',
-        400: '#2dd4bf',
-        500: '#37a49f', // Main primary
-        600: '#0d9488',
-        700: '#0f766e',
-        800: '#115e59',
-        900: '#134e4a',
+        50: '#E8F0ED',
+        100: '#D1E2DB',
+        200: '#A3C5B8',
+        300: '#4FD1C5', // Dark mode primary
+        400: '#4A9B8A',
+        500: '#3D6B5B', // Light mode primary
+        600: '#345C4E',
+        700: '#2B4D41',
+        800: '#223E34',
+        900: '#192F27',
     },
 
-    // Accent palette - warm beige/gold
+    // Accent palette - warm sand
     accent: {
-        50: '#fffbf5',
-        100: '#fff7ed',
-        200: '#EEDDD2',
-        300: '#D7C29E',
-        400: '#c4a676',
-        500: '#B8A078',
-        600: '#a08968',
-        700: '#7c6a50',
-        800: '#5c4f3b',
-        900: '#3d3528',
+        50: '#FBF7F3',
+        100: '#F5EDE3',
+        200: '#E8D9C7',
+        300: '#D4A574', // Main accent
+        400: '#C69460',
+        500: '#B8834C',
+        600: '#9A6E3F',
+        700: '#7C5932',
+        800: '#5E4425',
+        900: '#402F18',
     },
 
-    // Background colors
+    // Background colors - Option B
     background: {
-        light: '#fafafa',
-        lightAlt: '#f6f7f8',
-        dark: '#1d1e20',
-        darkAlt: '#22262a',
+        light: '#F5F7F4',      // Warm off-white with green tint
+        lightAlt: '#EEF1EC',
+        dark: '#0B1121',       // Deep navy (Midnight Blue)
+        darkAlt: '#0D1526',
     },
 
     // Surface colors (cards, modals)
     surface: {
-        light: '#ffffff',
-        lightAlt: '#fafaf9',
-        dark: '#2a2c30',
-        darkAlt: '#23262b',
+        light: '#FFFFFF',
+        lightAlt: '#F8FAF7',
+        dark: '#151E32',       // Midnight Blue surface
+        darkAlt: '#1A2438',
+    },
+
+    // Text colors
+    text: {
+        light: '#2C3E35',      // Forest charcoal
+        lightMuted: '#5A6B62',
+        dark: '#CBD5E1',       // Soft light for dark mode
+        darkMuted: '#8B9AAB',
     },
 
     // Theme-specific colors
     themes: {
-        anxiety: { primary: '#389485', bg: '#e8f5f3' },
-        focus: { primary: '#4b9b87', bg: '#EBF0FF' },
-        emotional: { primary: '#6bc7b8', bg: '#F5E8ED' },
-        sleep: { primary: '#2b5664', bg: '#EBF5F4' },
-        confidence: { primary: '#54aba2', bg: '#FFF4E5' },
-        lifestyle: { primary: '#37a49f', bg: '#F3EBF5' },
+        anxiety: { primary: '#3D6B5B', bg: '#E8F0ED' },
+        focus: { primary: '#4A9B8A', bg: '#E8F0ED' },
+        emotional: { primary: '#4FD1C5', bg: '#F0F5F4' },
+        sleep: { primary: '#2B4D41', bg: '#E8F0ED' },
+        confidence: { primary: '#4A9B8A', bg: '#FBF7F3' },
+        lifestyle: { primary: '#3D6B5B', bg: '#F5F7F4' },
     },
 
     // Mood colors
     moods: {
-        calm: { bg: '#EBF0FF', color: '#4b9b87' },
-        energized: { bg: '#FFF4E5', color: '#f59e0b' },
-        anxious: { bg: '#F3EBF5', color: '#8b5cf6' },
-        grateful: { bg: '#e8f5f3', color: '#22c55e' },
-        tired: { bg: '#F5E8ED', color: '#6b7280' },
+        calm: { bg: '#E8F0ED', color: '#3D6B5B' },
+        energized: { bg: '#FBF7F3', color: '#D4A574' },
+        anxious: { bg: '#F0E8F0', color: '#8B5CF6' },
+        grateful: { bg: '#E8F5E8', color: '#22C55E' },
+        tired: { bg: '#F0EDE8', color: '#6B7280' },
     },
 };
 

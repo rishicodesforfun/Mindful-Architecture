@@ -50,7 +50,7 @@ const Signup: React.FC = () => {
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#fafafa] dark:bg-[#0B1015] font-['Epilogue'] overflow-hidden px-8 transition-colors duration-300">
+        <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#F5F7F4] dark:bg-[#0B1121] font-['Epilogue'] overflow-hidden px-8 transition-colors duration-300">
 
             {/* Ambient background */}
             <div className="absolute inset-0 pointer-events-none">

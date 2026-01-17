@@ -53,7 +53,7 @@ const Journey: React.FC = () => {
                                         Block {block}: {name}
                                     </h3>
                                     {isActive && (
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-[#389485]/20 text-[#5EEAD4]' : 'bg-[#389485]/10 text-[#389485]'}`}>
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-[#3D6B5B]/20 text-[#4FD1C5]' : 'bg-[#3D6B5B]/10 text-[#3D6B5B]'}`}>
                                             Current
                                         </span>
                                     )}
@@ -95,12 +95,12 @@ const Journey: React.FC = () => {
                                         key={day.day}
                                         onClick={() => handleDaySelect(day.day)}
                                         className={`p-4 rounded-2xl text-left transition-all active:scale-[0.98] ${isCurrent
-                                                ? isDark ? 'bg-[#389485]/20 ring-2 ring-[#389485]' : 'bg-[#389485]/10 ring-2 ring-[#389485]'
-                                                : status === 'complete'
-                                                    ? isDark ? 'bg-[#389485]/10' : 'bg-green-50'
-                                                    : status === 'partial'
-                                                        ? isDark ? 'bg-yellow-900/20' : 'bg-yellow-50'
-                                                        : isDark ? 'bg-white/5' : 'bg-gray-50'
+                                            ? isDark ? 'bg-[#3D6B5B]/20 ring-2 ring-[#3D6B5B]' : 'bg-[#3D6B5B]/10 ring-2 ring-[#3D6B5B]'
+                                            : status === 'complete'
+                                                ? isDark ? 'bg-[#3D6B5B]/10' : 'bg-green-50'
+                                                : status === 'partial'
+                                                    ? isDark ? 'bg-yellow-900/20' : 'bg-yellow-50'
+                                                    : isDark ? 'bg-white/5' : 'bg-gray-50'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between mb-1">
@@ -108,13 +108,13 @@ const Journey: React.FC = () => {
                                                 Day {day.day}
                                             </span>
                                             {status === 'complete' && (
-                                                <span className="material-symbols-outlined text-[#389485] text-[16px]">check_circle</span>
+                                                <span className="material-symbols-outlined text-[#3D6B5B] text-[16px]">check_circle</span>
                                             )}
                                             {status === 'partial' && (
                                                 <span className={`material-symbols-outlined text-[16px] ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>pending</span>
                                             )}
                                             {isCurrent && status !== 'complete' && (
-                                                <span className="w-2 h-2 rounded-full bg-[#389485] animate-pulse" />
+                                                <span className="w-2 h-2 rounded-full bg-[#3D6B5B] animate-pulse" />
                                             )}
                                         </div>
                                         <p className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-[#111817]'}`}>
@@ -137,7 +137,7 @@ const Journey: React.FC = () => {
         <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#fcfcfc]'} font-['Manrope'] pb-24 overflow-hidden transition-colors duration-300`}>
 
             {/* Ambient background */}
-            <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#389485]/5 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
+            <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#3D6B5B]/5 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
             <div className="fixed bottom-[10%] right-[-5%] w-[40%] h-[40%] bg-[#E2B19F]/10 dark:bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none z-0" />
 
             <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -151,7 +151,7 @@ const Journey: React.FC = () => {
                             Your Journey
                         </h1>
                     </div>
-                    <div className={`px-4 py-2 rounded-full ${isDark ? 'bg-[#389485]/20 text-[#5EEAD4]' : 'bg-[#389485]/10 text-[#389485]'} text-sm font-bold`}>
+                    <div className={`px-4 py-2 rounded-full ${isDark ? 'bg-[#3D6B5B]/20 text-[#4FD1C5]' : 'bg-[#3D6B5B]/10 text-[#3D6B5B]'} text-sm font-bold`}>
                         Day {user.currentDay}/30
                     </div>
                 </div>
@@ -172,7 +172,7 @@ const Journey: React.FC = () => {
 
                     <div className={`h-3 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-100'} overflow-hidden`}>
                         <div
-                            className="h-full bg-gradient-to-r from-[#389485] to-[#5EEAD4] rounded-full transition-all duration-500"
+                            className="h-full bg-gradient-to-r from-[#3D6B5B] to-[#4FD1C5] rounded-full transition-all duration-500"
                             style={{ width: `${(user.currentDay / 30) * 100}%` }}
                         />
                     </div>
@@ -181,8 +181,8 @@ const Journey: React.FC = () => {
                         {[1, 2, 3].map((block) => (
                             <div key={block} className="flex items-center gap-2">
                                 <div className={`w-3 h-3 rounded-full ${block === 1 ? 'bg-gradient-to-r from-teal-400 to-teal-600' :
-                                        block === 2 ? 'bg-gradient-to-r from-indigo-400 to-indigo-600' :
-                                            'bg-gradient-to-r from-purple-400 to-purple-600'
+                                    block === 2 ? 'bg-gradient-to-r from-indigo-400 to-indigo-600' :
+                                        'bg-gradient-to-r from-purple-400 to-purple-600'
                                     }`} />
                                 <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                     Block {block}

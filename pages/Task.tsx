@@ -12,7 +12,7 @@ const Task: React.FC = () => {
   const todayCompletion = getTodayCompletion();
   const isCompleted = todayCompletion?.task || false;
   const todayContent = getDayContent(user.currentDay);
-  const isDark = user.darkMode;
+  const isDark = user.nightMode;
 
   const taskData = todayContent?.task || {
     title: 'Mindful Walking',
@@ -36,7 +36,7 @@ const Task: React.FC = () => {
   };
 
   return (
-    <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1015]' : 'bg-[#fafafa]'
+    <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'
       } font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
 
       {/* Logo Watermark */}
@@ -56,7 +56,7 @@ const Task: React.FC = () => {
           <span className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
             Day {user.currentDay.toString().padStart(2, '0')}
           </span>
-          <span className={`${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>•</span>
+          <span className={`${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>•</span>
           <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             {todayContent?.title || 'Awareness'}
           </span>
@@ -73,7 +73,7 @@ const Task: React.FC = () => {
           <div className={`relative h-56 ${isDark ? 'bg-[#0c111c]' : 'bg-[#F2F7F6]'
             } flex items-center justify-center overflow-hidden`}>
             {/* Decorative circles */}
-            <div className={`absolute top-0 right-0 w-32 h-32 rounded-full ${isDark ? 'bg-[#5EEAD4]/10' : 'bg-[#4b9b87]/10'
+            <div className={`absolute top-0 right-0 w-32 h-32 rounded-full ${isDark ? 'bg-[#4FD1C5]/10' : 'bg-[#3D6B5B]/10'
               } translate-x-1/3 -translate-y-1/3`} />
             <div className={`absolute bottom-0 left-0 w-40 h-40 rounded-full ${isDark ? 'bg-orange-500/10' : 'bg-[#E2B19F]/20'
               } -translate-x-1/3 translate-y-1/3`} />
@@ -82,12 +82,12 @@ const Task: React.FC = () => {
             <WalkingPersonIllustration className="relative z-10 w-48 h-48" />
 
             {/* Bottom fade */}
-            <div className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t ${isDark ? 'from-[#161B22]' : 'from-white'
+            <div className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t ${isDark ? 'from-[#151E32]' : 'from-white'
               } to-transparent`} />
 
             {/* Completed badge */}
             {isCompleted && (
-              <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#4b9b87] text-white text-xs font-bold">
+              <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#3D6B5B] text-white text-xs font-bold">
                 <span className="material-symbols-outlined text-[16px]">check_circle</span>
                 Completed!
               </div>
@@ -97,12 +97,12 @@ const Task: React.FC = () => {
           {/* Content */}
           <div className="p-6 pt-4">
             {/* Badge */}
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4 ${isDark ? 'bg-[#5EEAD4]/10' : 'bg-[#4b9b87]/10'
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-4 ${isDark ? 'bg-[#4FD1C5]/10' : 'bg-[#3D6B5B]/10'
               }`}>
-              <span className={`material-symbols-outlined text-[14px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
+              <span className={`material-symbols-outlined text-[14px] ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
                 footprint
               </span>
-              <span className={`text-xs font-bold uppercase tracking-wide ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
+              <span className={`text-xs font-bold uppercase tracking-wide ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
                 Lifestyle Task
               </span>
             </div>
@@ -113,7 +113,7 @@ const Task: React.FC = () => {
             </h1>
 
             {/* Subtitle */}
-            <p className={`text-base mb-4 ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
+            <p className={`text-base mb-4 ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
               {taskData.description}
             </p>
 
@@ -130,7 +130,7 @@ const Task: React.FC = () => {
               <>
                 <button
                   onClick={handleComplete}
-                  className="w-full py-4 rounded-2xl bg-[#4b9b87] text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-[#4b9b87]/25 hover:shadow-[#4b9b87]/40 transition-all active:scale-[0.98]"
+                  className="w-full py-4 rounded-2xl bg-[#3D6B5B] text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-[#3D6B5B]/25 hover:shadow-[#3D6B5B]/40 transition-all active:scale-[0.98]"
                 >
                   <span className="material-symbols-outlined text-[20px]">check_circle</span>
                   Mark as Complete
@@ -146,7 +146,7 @@ const Task: React.FC = () => {
               </>
             ) : (
               <div className="text-center py-4">
-                <span className="material-symbols-outlined text-4xl text-[#4b9b87] mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>
+                <span className="material-symbols-outlined text-4xl text-[#3D6B5B] mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>
                   celebration
                 </span>
                 <p className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>Great job!</p>
@@ -160,16 +160,16 @@ const Task: React.FC = () => {
       </main>
 
       {/* Bottom Nav */}
-      <nav className={`fixed bottom-0 left-0 right-0 px-6 py-4 flex justify-around ${isDark ? 'bg-[#0B1015]/90' : 'bg-[#fafafa]/90'
+      <nav className={`fixed bottom-0 left-0 right-0 px-6 py-4 flex justify-around ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'
         } backdrop-blur-sm border-t ${isDark ? 'border-white/5' : 'border-gray-100'}`}>
         <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1">
           <span className={`material-symbols-outlined ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>wb_sunny</span>
           <span className={`text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Today</span>
         </button>
         <button className="flex flex-col items-center gap-1">
-          <span className={`material-symbols-outlined ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}
+          <span className={`material-symbols-outlined ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}
             style={{ fontVariationSettings: "'FILL' 1" }}>spa</span>
-          <span className={`text-xs font-medium ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>Practice</span>
+          <span className={`text-xs font-medium ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>Practice</span>
         </button>
         <button onClick={() => navigate('/dashboard')} className="flex flex-col items-center gap-1">
           <span className={`material-symbols-outlined ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>map</span>
