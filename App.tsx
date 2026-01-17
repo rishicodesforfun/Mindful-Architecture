@@ -26,12 +26,12 @@ const AppContent: React.FC = () => {
   // Apply dark mode class for Tailwind dark: variant support
   const darkModeClass = user.nightMode ? 'dark' : '';
 
-  // Responsive container widths - desktop uses full width
+  // Responsive container widths
   const containerWidth = device.isMobile
     ? 'w-full'
     : device.isTablet
       ? 'w-full max-w-[768px] mx-auto'
-      : 'w-full'; // Desktop: full width
+      : 'w-full max-w-[1200px] mx-auto'; // Desktop: max-width with centering
 
   return (
     <div className={`${darkModeClass} w-full min-h-screen`}>

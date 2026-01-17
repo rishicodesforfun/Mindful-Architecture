@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { getDayContent } from '../data/curriculum';
 import { FloatingOrbs } from '../components/Illustrations';
+import confetti from 'canvas-confetti';
 
 interface Session {
   id: string;
@@ -20,6 +21,7 @@ const Player: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
   const [breathPhase, setBreathPhase] = useState(0);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Get day from URL param or use current day
   const dayParam = searchParams.get('day');
@@ -43,22 +45,76 @@ const Player: React.FC = () => {
     },
   ] : [];
 
-  // Timer logic
+  // Timer logic with auto-complete and confetti
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isPlaying && selectedSession) {
       interval = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= selectedSession.duration * 60) {
+          const newProgress = prev + 1;
+
+          // Timer complete!
+          if (newProgress >= selectedSession.duration * 60) {
             setIsPlaying(false);
+            setShowCelebration(true);
+
+            // Trigger confetti celebration
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+
+            const randomInRange = (min: number, max: number) => {
+              return Math.random() * (max - min) + min;
+            };
+
+            const interval = setInterval(() => {
+              const timeLeft = animationEnd - Date.now();
+
+              if (timeLeft <= 0) {
+                clearInterval(interval);
+                return;
+              }
+
+              const particleCount = 50 * (timeLeft / duration);
+
+              // Left side confetti
+              confetti({
+                particleCount,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: ['#3D6B5B', '#4FD1C5', '#D4A574', '#CBD5E1']
+              });
+
+              // Right side confetti
+              confetti({
+                particleCount,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: ['#3D6B5B', '#4FD1C5', '#D4A574', '#CBD5E1']
+              });
+            }, 250);
+
+            // Auto-complete the session and navigate
+            setTimeout(() => {
+              completeSession('meditation');
+              // Navigate back after completing
+              if (dayParam) {
+                navigate(`/day/${viewingDay}`);
+              } else {
+                navigate('/home');
+              }
+            }, 3000);
+
             return prev;
           }
-          return prev + 1;
+
+          return newProgress;
         });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, selectedSession]);
+  }, [isPlaying, selectedSession, completeSession]);
 
   // Breathing animation
   useEffect(() => {
@@ -250,6 +306,44 @@ const Player: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Celebration Overlay */}
+        {showCelebration && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+            <div className="text-center px-8 animate-scale-in">
+              <div className={`mb-6 ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
+                <span className="material-symbols-outlined" style={{ fontSize: '120px', fontVariationSettings: "'FILL' 1" }}>
+                  celebration
+                </span>
+              </div>
+              <h2 className={`text-4xl font-bold mb-4 ${isDark ? 'text-white' : 'text-[#2C3E35]'}`}>
+                Amazing Work! 🎉
+              </h2>
+              <p className={`text-xl mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                You completed your meditation
+              </p>
+              <p className={`text-lg ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'} font-medium mb-8`}>
+                Your mind and body thank you ✨
+              </p>
+              <button
+                onClick={() => {
+                  completeSession('meditation');
+                  if (dayParam) {
+                    navigate(`/day/${viewingDay}`);
+                  } else {
+                    navigate('/home');
+                  }
+                }}
+                className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 ${isDark
+                    ? 'bg-[#4FD1C5] text-[#0B1121]'
+                    : 'bg-[#3D6B5B] text-white'
+                  } shadow-lg`}
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Bottom Action */}
         <div className={`relative z-10 px-6 pb-12 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#fafaf9]/90'} backdrop-blur-sm`}>

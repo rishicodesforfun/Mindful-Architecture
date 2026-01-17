@@ -25,7 +25,7 @@ const BottomNav: React.FC = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-[480px] mx-auto pb-6 pt-2 px-6 bg-white/85 dark:bg-[#151E32]/90 backdrop-blur-xl border-t border-white/20 dark:border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] transition-colors duration-300">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-[1200px] mx-auto pb-6 pt-2 px-6 bg-white/85 dark:bg-[#151E32]/90 backdrop-blur-xl border-t border-white/20 dark:border-white/5 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] transition-colors duration-300">
       <div className="flex justify-between items-end">
         {navItems.slice(0, 2).map((item) => (
           <button
