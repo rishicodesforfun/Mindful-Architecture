@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { UserProvider, useUser } from './context/UserContext';
 import { useDevice } from './hooks/useDevice';
+import LeftPanel from './components/LeftPanel';
 
 // Pages - matching sitemap
 import Login from './pages/Login';
@@ -22,20 +23,29 @@ import DayView from './pages/DayView';
 const AppContent: React.FC = () => {
   const { user } = useUser();
   const device = useDevice();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Apply dark mode class for Tailwind dark: variant support
   const darkModeClass = user.nightMode ? 'dark' : '';
 
-  // Responsive container widths
-  const containerWidth = device.isMobile
-    ? 'w-full'
-    : device.isTablet
-      ? 'w-full max-w-[768px] mx-auto'
-      : 'w-full max-w-[1200px] mx-auto'; // Desktop: max-width with centering
+  // Responsive container - let it naturally fill remaining space (no w-full)
+  const containerWidth = 'mx-auto';
+
+  // Check if we're on auth pages (no sidebar)
+  const isAuthPage = location.hash.includes('/login') || location.hash.includes('/signup') || location.hash === '#/' || location.hash === '';
+
+  // Dynamic margin based on sidebar state
+  const mainMargin = isAuthPage ? '' : isSidebarCollapsed ? 'ml-[70px]' : 'ml-[280px]';
 
   return (
-    <div className={`${darkModeClass} w-full min-h-screen`}>
-      <div className={`${containerWidth} min-h-screen bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] relative transition-colors duration-300`}>
+    <div className={`${darkModeClass} min-h-screen`}>
+      {!isAuthPage && (
+        <LeftPanel
+          isCollapsed={isSidebarCollapsed}
+          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
+      )}
+      <div className={`${containerWidth} ${mainMargin} min-h-screen bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] relative transition-all duration-300`}>
         <Routes>
           {/* ===================== */}
           {/* SITEMAP ROUTES */}

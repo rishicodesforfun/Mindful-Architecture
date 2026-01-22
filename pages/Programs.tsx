@@ -90,13 +90,13 @@ const Programs: React.FC = () => {
     };
 
     return (
-        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
+        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-16 overflow-hidden transition-colors duration-300`}>
 
             <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
             {/* Header */}
-            <header className={`sticky top-0 z-30 px-6 pt-12 pb-4 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'} backdrop-blur-xl`}>
-                <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+            <header className={`sticky top-0 z-30 px-4 pt-4 pb-3 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'} backdrop-blur-xl`}>
+                <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                     Programs
                 </h1>
                 <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -105,18 +105,18 @@ const Programs: React.FC = () => {
             </header>
 
             {/* Programs Grid */}
-            <main className="relative z-10 px-6 space-y-4">
+            <main className="relative z-10 px-4 space-y-3">
                 {programs.map((program) => (
                     <div
                         key={program.id}
                         onClick={() => handleProgramSelect(program.id)}
-                        className={`relative rounded-3xl overflow-hidden cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}
+                        className={`relative rounded-xl overflow-hidden cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}
                     >
-                        <div className="p-5">
+                        <div className="p-4">
                             <div className="flex items-start gap-4">
                                 {/* Icon */}
-                                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${program.color} flex items-center justify-center flex-shrink-0`}>
-                                    <span className="material-symbols-outlined text-white text-[28px]">{program.icon}</span>
+                                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${program.color} flex items-center justify-center flex-shrink-0`}>
+                                    <span className="material-symbols-outlined text-white text-[24px]">{program.icon}</span>
                                 </div>
 
                                 {/* Content */}
@@ -154,7 +154,7 @@ const Programs: React.FC = () => {
 
                         {/* Current program indicator */}
                         {user.selectedTheme === program.id && (
-                            <div className={`px-5 py-2 ${isDark ? 'bg-[#5EEAD4]/10' : 'bg-[#4b9b87]/10'} border-t ${isDark ? 'border-white/5' : 'border-gray-100'}`}>
+                            <div className={`px-4 py-2 ${isDark ? 'bg-[#5EEAD4]/10' : 'bg-[#4b9b87]/10'} border-t ${isDark ? 'border-white/5' : 'border-gray-100'}`}>
                                 <span className={`text-xs font-bold ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
                                     ✓ Currently Active • Day {user.currentDay}/30
                                 </span>
@@ -163,8 +163,6 @@ const Programs: React.FC = () => {
                     </div>
                 ))}
             </main>
-
-            <BottomNav />
         </div>
     );
 };

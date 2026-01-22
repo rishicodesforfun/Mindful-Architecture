@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BottomNav from '../components/BottomNav';
 import LogoutModal from '../components/LogoutModal';
 import { useUser, AvatarId } from '../context/UserContext';
 import MentamindBranding from '../components/MentamindBranding';
@@ -24,7 +23,7 @@ const personaInfo = {
 
 const ProfilePage: React.FC = () => {
     const navigate = useNavigate();
-    const { user, setName, setAvatar, activatePause, toggleNightMode, toggleShortSession, logout, clearProgressAndLogout } = useUser();
+    const { user, setName, setAvatar, activatePause, toggleNightMode, toggleShortSession, logout, clearProgressAndLogout, setSoundPreference } = useUser();
 
     const [showEditModal, setShowEditModal] = useState(false);
     const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -55,22 +54,22 @@ const ProfilePage: React.FC = () => {
     const currentPersona = user.persona ? personaInfo[user.persona] : null;
 
     return (
-        <div className="relative flex h-full min-h-screen w-full flex-col bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] pb-24 overflow-y-auto no-scrollbar transition-colors duration-300">
+        <div className="relative flex h-full min-h-screen w-full flex-col bg-[#F5F7F4] dark:bg-[#0B1121] text-[#2C3E35] dark:text-[#CBD5E1] font-['Epilogue'] pb-16 overflow-y-auto no-scrollbar transition-colors duration-300">
 
             {/* Header */}
-            <header className="px-6 pt-10 pb-2">
-                <h1 className="text-2xl font-black tracking-tight text-[#111618] dark:text-white">Profile</h1>
+            <header className="px-4 pt-4 pb-2">
+                <h1 className="text-xl font-black tracking-tight text-[#111618] dark:text-white">Profile</h1>
             </header>
 
             {/* Profile Card */}
-            <section className="mx-6 mt-4 bg-white dark:bg-[#161B22] rounded-3xl p-6 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-none ring-1 ring-black/5 dark:ring-white/5 transition-colors">
+            <section className="mx-4 mt-3 bg-white dark:bg-[#161B22] rounded-xl p-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-none ring-1 ring-black/5 dark:ring-white/5 transition-colors">
                 <div className="flex flex-col items-center text-center">
                     {/* Avatar - Clickable */}
                     <button
                         onClick={() => setShowAvatarModal(true)}
                         className="relative group"
                     >
-                        <div className={`w-24 h-24 rounded-full ${currentAvatar.bg} flex items-center justify-center text-5xl ring-4 ring-white dark:ring-gray-800 shadow-lg transition-transform group-hover:scale-105`}>
+                        <div className={`w-20 h-20 rounded-full ${currentAvatar.bg} flex items-center justify-center text-5xl ring-4 ring-white dark:ring-gray-800 shadow-lg transition-transform group-hover:scale-105`}>
                             {currentAvatar.emoji}
                         </div>
                         <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#37a49f] text-white flex items-center justify-center shadow-md">
@@ -109,7 +108,7 @@ const ProfilePage: React.FC = () => {
             </section>
 
             {/* Pause Token Card */}
-            <section className="mx-6 mt-6 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-5 ring-1 ring-amber-200/50 dark:ring-amber-700/30 transition-colors">
+            <section className="mx-4 mt-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-4 ring-1 ring-amber-200/50 dark:ring-amber-700/30 transition-colors">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-amber-400 dark:bg-amber-500 flex items-center justify-center shadow-sm">
@@ -134,33 +133,36 @@ const ProfilePage: React.FC = () => {
             </section>
 
             {/* Achievements Grid */}
-            <section className="mx-6 mt-6">
-                <h3 className="font-bold text-sm text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Achievements</h3>
+            <section className="mx-4 mt-4">
+                <h3 className="font-bold text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Achievements</h3>
                 <div className="grid grid-cols-4 gap-3">
                     {[
-                        { icon: '🌱', label: 'Seedling', unlocked: true },
-                        { icon: '🔥', label: 'On Fire', unlocked: user.streak >= 7 },
-                        { icon: '🧘', label: 'Zen Master', unlocked: user.sessionCompletions.length >= 10 },
-                        { icon: '🌟', label: 'Star', unlocked: false },
-                    ].map((badge, i) => (
-                        <div
-                            key={i}
-                            className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${badge.unlocked
-                                ? 'bg-white dark:bg-[#161B22] shadow-sm ring-1 ring-black/5 dark:ring-white/5'
-                                : 'bg-gray-100 dark:bg-gray-800/50 opacity-40'
-                                }`}
-                        >
-                            <span className="text-2xl">{badge.icon}</span>
-                            <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{badge.label}</span>
-                        </div>
-                    ))}
+                        { id: 'seedling', icon: '🌱', label: 'Seedling' },
+                        { id: 'fire', icon: '🔥', label: 'On Fire' },
+                        { id: 'zen', icon: '🧘', label: 'Zen Master' },
+                        { id: 'star', icon: '🌟', label: 'Star' },
+                    ].map((badge, i) => {
+                        const isUnlocked = user.unlockedAchievements.includes(badge.id);
+                        return (
+                            <div
+                                key={i}
+                                className={`flex flex-col items-center gap-2 p-3 rounded-2xl transition-all ${isUnlocked
+                                    ? 'bg-white dark:bg-[#161B22] shadow-sm ring-1 ring-black/5 dark:ring-white/5'
+                                    : 'bg-gray-100 dark:bg-gray-800/50 opacity-40 grayscale'
+                                    }`}
+                            >
+                                <span className="text-2xl">{badge.icon}</span>
+                                <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400">{badge.label}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </section>
 
             {/* Settings Section */}
-            <section className="mx-6 mt-6">
-                <h3 className="font-bold text-sm text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Settings</h3>
-                <div className="bg-white dark:bg-[#161B22] rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5 shadow-sm dark:shadow-none transition-colors">
+            <section className="mx-4 mt-4">
+                <h3 className="font-bold text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Settings</h3>
+                <div className="bg-white dark:bg-[#161B22] rounded-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5 shadow-sm dark:shadow-none transition-colors">
                     {/* Edit Profile */}
                     <button
                         onClick={() => setShowEditModal(true)}
@@ -216,9 +218,9 @@ const ProfilePage: React.FC = () => {
             </section>
 
             {/* Support Section */}
-            <section className="mx-6 mt-6 mb-6">
-                <h3 className="font-bold text-sm text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Support</h3>
-                <div className="bg-white dark:bg-[#161B22] rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5 shadow-sm dark:shadow-none transition-colors">
+            <section className="mx-4 mt-4 mb-4">
+                <h3 className="font-bold text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Support</h3>
+                <div className="bg-white dark:bg-[#161B22] rounded-xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5 shadow-sm dark:shadow-none transition-colors">
                     {['Help & FAQ', 'Send Feedback', 'Privacy Policy'].map((item, i) => (
                         <button
                             key={i}
@@ -233,21 +235,19 @@ const ProfilePage: React.FC = () => {
             </section>
 
             {/* Sign Out */}
-            <div className="mx-6 mb-8">
+            <div className="mx-4 mb-8">
                 <button
                     onClick={() => setShowLogoutModal(true)}
-                    className="w-full py-4 text-center text-red-500 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
+                    className="w-full py-4 text-center text-red-500 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                 >
                     Sign Out
                 </button>
             </div>
 
             {/* Mentamind Branding */}
-            <div className="mx-6 mb-6">
+            <div className="mx-4 mb-6">
                 <MentamindBranding variant="footer" />
             </div>
-
-            <BottomNav />
 
             {/* Edit Name Modal */}
             {showEditModal && (
@@ -320,10 +320,21 @@ const ProfilePage: React.FC = () => {
                     <div className="bg-white dark:bg-[#161B22] rounded-3xl p-6 w-full max-w-sm shadow-2xl">
                         <h3 className="text-xl font-bold mb-4 text-[#111618] dark:text-white">Sound Preferences</h3>
                         <div className="space-y-4">
-                            {['Nature Sounds', 'Ambient Music', 'Guided Voice', 'Silent Mode'].map((sound, i) => (
+                            {[
+                                { id: 'nature', label: 'Nature Sounds' },
+                                { id: 'ambient', label: 'Ambient Music' },
+                                { id: 'voice', label: 'Guided Voice' },
+                                { id: 'silent', label: 'Silent Mode' },
+                            ].map((sound, i) => (
                                 <label key={i} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer">
-                                    <input type="radio" name="sound" defaultChecked={i === 0} className="w-5 h-5 accent-[#37a49f]" />
-                                    <span className="font-medium text-[#111618] dark:text-white">{sound}</span>
+                                    <input
+                                        type="radio"
+                                        name="sound"
+                                        checked={user.soundPreference === sound.id}
+                                        onChange={() => setSoundPreference(sound.id as any)}
+                                        className="w-5 h-5 accent-[#37a49f]"
+                                    />
+                                    <span className="font-medium text-[#111618] dark:text-white">{sound.label}</span>
                                 </label>
                             ))}
                         </div>
@@ -331,7 +342,7 @@ const ProfilePage: React.FC = () => {
                             onClick={() => setShowSoundModal(false)}
                             className="w-full mt-6 py-3 rounded-xl font-bold bg-[#37a49f] text-white shadow-md hover:shadow-lg transition-all"
                         >
-                            Save
+                            Done
                         </button>
                     </div>
                 </div>

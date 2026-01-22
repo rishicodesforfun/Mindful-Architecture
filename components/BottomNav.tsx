@@ -45,8 +45,13 @@ const BottomNav: React.FC = () => {
           </button>
         ))}
 
-        {/* Center Mentamind Logo */}
-        <MentamindBranding variant="nav" />
+        {/* Center Mentamind Logo - Links to Dashboard */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="relative z-10 hover:scale-105 transition-transform"
+        >
+          <MentamindBranding variant="nav" />
+        </button>
 
         {navItems.slice(2).map((item) => (
           <button

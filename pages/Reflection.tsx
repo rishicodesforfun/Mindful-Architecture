@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import { useUser } from '../context/UserContext';
 import { getDayContent } from '../data/curriculum';
@@ -13,11 +13,15 @@ import {
 
 const Reflection: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user, saveReflection, completeSession } = useUser();
     const [selectedMood, setSelectedMood] = useState<string | null>(null);
     const [journalText, setJournalText] = useState('');
 
-    const todayContent = getDayContent(user.currentDay);
+    const dayParam = searchParams.get('day');
+    const viewingDay = dayParam ? parseInt(dayParam, 10) : user.currentDay;
+
+    const todayContent = getDayContent(viewingDay);
     const maxChars = 500;
     const isDark = user.nightMode;
 
@@ -31,27 +35,36 @@ const Reflection: React.FC = () => {
     const handleSave = () => {
         if (selectedMood || journalText) {
             saveReflection({
-                day: user.currentDay,
+                day: viewingDay,
                 mood: selectedMood as any,
                 journal: journalText,
                 date: new Date().toISOString()
             });
-            completeSession('reflection');
-            navigate('/home');
+            completeSession('reflection', viewingDay);
+            if (dayParam) {
+                navigate(`/day/${viewingDay}`);
+            } else {
+                navigate('/home');
+            }
         }
     };
 
-    const personaName = user.persona?.name || 'You';
+    const personaNames: Record<string, string> = {
+        meera: 'Meera',
+        rohan: 'Rohan',
+        arjun: 'Arjun'
+    };
+    const personaName = user.persona && personaNames[user.persona] ? personaNames[user.persona] : 'You';
 
     return (
         <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'
-            } font-['Epilogue'] pb-32 overflow-hidden transition-colors duration-300`}>
+            } font-['Epilogue'] pb-16 overflow-hidden transition-colors duration-300`}>
 
             {/* Logo Watermark */}
             <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
             {/* Header */}
-            <header className="relative z-10 flex items-center justify-between px-6 pt-12 pb-4">
+            <header className="relative z-10 flex items-center justify-between px-4 pt-4 pb-2">
                 <button
                     onClick={() => navigate(-1)}
                     className={`flex h-10 w-10 items-center justify-center rounded-full ${isDark ? 'bg-white/10' : 'bg-white'
@@ -62,9 +75,9 @@ const Reflection: React.FC = () => {
 
                 <div className="text-center">
                     <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Day {user.currentDay.toString().padStart(2, '0')}
+                        Day {viewingDay.toString().padStart(2, '0')}
                     </p>
-                    <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                    <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                         {todayContent?.title || 'Focus'}
                     </p>
                 </div>
@@ -78,13 +91,13 @@ const Reflection: React.FC = () => {
                 </button>
             </header>
 
-            <main className="relative z-10 px-6">
+            <main className="relative z-10 px-4">
                 {/* Question */}
-                <div className="text-center mb-8 mt-4">
-                    <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                <div className="text-center mb-6 mt-2">
+                    <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                         How did this session
                     </h1>
-                    <p className={`text-2xl font-serif italic ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
+                    <p className={`text-xl font-serif italic ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
                         make you feel?
                     </p>
                 </div>
@@ -97,7 +110,7 @@ const Reflection: React.FC = () => {
                             <button
                                 key={mood.id}
                                 onClick={() => setSelectedMood(mood.id)}
-                                className={`flex flex-col items-center justify-center py-6 rounded-2xl transition-all ${isSelected
+                                className={`flex flex-col items-center justify-center py-4 rounded-xl transition-all ${isSelected
                                     ? 'ring-2 ring-[#3D6B5B] dark:ring-[#4FD1C5] scale-[1.02]'
                                     : ''
                                     } ${isDark ? mood.bgDark : mood.bgLight}`}
@@ -105,7 +118,7 @@ const Reflection: React.FC = () => {
                                 <div className="w-16 h-16 mb-3">
                                     <mood.Illustration className="w-full h-full" />
                                 </div>
-                                <span className={`text-base font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                                <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                                     {mood.label}
                                 </span>
                             </button>
@@ -144,11 +157,11 @@ const Reflection: React.FC = () => {
             </main>
 
             {/* Save Button - Fixed */}
-            <div className={`fixed bottom-24 left-0 right-0 px-6 z-20`}>
+            <div className={`fixed bottom-6 left-0 right-0 px-4 z-20`}>
                 <button
                     onClick={handleSave}
                     disabled={!selectedMood && !journalText}
-                    className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${selectedMood || journalText
+                    className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${selectedMood || journalText
                         ? 'bg-[#3D6B5B] text-white shadow-lg shadow-[#3D6B5B]/25 hover:shadow-[#3D6B5B]/40 active:scale-[0.98]'
                         : isDark
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
@@ -159,8 +172,6 @@ const Reflection: React.FC = () => {
                     <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                 </button>
             </div>
-
-            <BottomNav />
         </div>
     );
 };

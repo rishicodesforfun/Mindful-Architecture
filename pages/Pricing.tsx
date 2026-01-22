@@ -13,63 +13,46 @@ const Pricing: React.FC = () => {
     const plans = [
         {
             id: 'free',
-            name: 'Free Trial',
+            name: 'App Access',
             price: 0,
-            period: '7 days',
-            description: 'Try Mindful Architecture risk-free',
+            period: 'forever',
+            description: 'Full access to your digital journey',
             features: [
-                'Full access to Foundations program',
-                '7 guided meditation sessions',
-                'Basic mood tracking',
-                'Daily session reminders',
+                'All 30 days of curriculum',
+                'Unlimited meditation sessions',
+                'Mood & habit tracking',
+                'Personalized reflections',
             ],
-            cta: 'Start Free Trial',
+            cta: user.subscriptionStatus === 'free' ? 'Current Plan' : 'Downgrade',
             popular: false,
         },
         {
             id: 'premium',
-            name: 'Premium',
-            price: billingCycle === 'yearly' ? 79 : 9.99,
+            name: 'Mind + Care',
+            price: billingCycle === 'yearly' ? 299 : 29.99,
             period: billingCycle === 'yearly' ? '/year' : '/month',
-            description: 'Everything you need for your journey',
+            description: 'Digital tools + Professional support',
             features: [
-                'All 6 meditation programs',
-                'Unlimited sessions',
-                'Advanced mood & habit tracking',
-                'Journal with AI insights',
-                'Sleep stories & soundscapes',
-                'Offline downloads',
-                'Priority support',
+                'Everything in App Access',
+                '2 Psychologist Sessions/mo',
+                'Priority Clinical Support',
+                'Direct booking via Mentamind.in',
             ],
-            cta: 'Get Premium',
+            cta: user.subscriptionStatus === 'premium' ? 'Active Plan' : 'Upgrade to Book',
             popular: true,
-            savings: billingCycle === 'yearly' ? 'Save 34%' : null,
-        },
-        {
-            id: 'lifetime',
-            name: 'Lifetime',
-            price: 199,
-            period: 'one-time',
-            description: 'Own it forever',
-            features: [
-                'Everything in Premium',
-                'Lifetime access',
-                'All future programs included',
-                'Exclusive masterclasses',
-                'Personal progress dashboard',
-                'Family sharing (up to 5)',
-            ],
-            cta: 'Get Lifetime Access',
-            popular: false,
+            savings: billingCycle === 'yearly' ? 'Save 17%' : null,
         },
     ];
 
+    const { upgradeToPremium } = useUser();
+
     const handleSelectPlan = (planId: string) => {
-        // In real app, this would go to payment
-        if (planId === 'free') {
-            navigate('/signup?plan=free');
+        if (planId === 'premium') {
+            upgradeToPremium();
+            navigate('/dashboard'); // Go back to dashboard to see new features
         } else {
-            navigate(`/signup?plan=${planId}&billing=${billingCycle}`);
+            // Already free
+            navigate('/dashboard');
         }
     };
 

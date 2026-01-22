@@ -7,7 +7,7 @@
  * Future implementation: Supabase (when ready)
  */
 
-import type { UserState } from '../context/UserContext';
+import type { UserState } from '../../context/UserContext';
 
 /**
  * UserProgress represents the persisted user data.
@@ -58,6 +58,9 @@ export interface UserProgress {
     nightMode: boolean;
     shortSessionMode: boolean;
 
+    // Subscription
+    subscriptionStatus: 'free' | 'premium';
+
     // Favorites
     favoriteDays: number[];
 
@@ -67,6 +70,10 @@ export interface UserProgress {
     // Metadata
     lastUpdated: string; // ISO string
     version: number; // For future migrations
+
+    // Audio & Gamification (New in v2)
+    soundPreference?: 'nature' | 'ambient' | 'voice' | 'silent';
+    unlockedAchievements?: string[];
 }
 
 // NEW: Granular Types for Dynamic Tracking
@@ -181,10 +188,16 @@ export function userStateToProgress(state: UserState, userKey: string): UserProg
         pauseExpiresAt: state.pauseExpiresAt?.toISOString() ?? null,
         nightMode: state.nightMode,
         shortSessionMode: state.shortSessionMode,
+        subscriptionStatus: state.subscriptionStatus,
         favoriteDays: state.favoriteDays,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
+
+        // New features
+        soundPreference: state.soundPreference,
+        unlockedAchievements: state.unlockedAchievements,
+
         lastUpdated: new Date().toISOString(),
-        version: 1,
+        version: 2, // Bumped version
     };
 }
 
@@ -215,7 +228,12 @@ export function progressToUserState(progress: UserProgress): UserState {
         pauseExpiresAt: progress.pauseExpiresAt ? new Date(progress.pauseExpiresAt) : null,
         nightMode: progress.nightMode,
         shortSessionMode: progress.shortSessionMode,
+        subscriptionStatus: progress.subscriptionStatus || 'free',
         favoriteDays: progress.favoriteDays,
         hasCompletedOnboarding: progress.hasCompletedOnboarding,
+
+        // New features with defaults for migration
+        soundPreference: progress.soundPreference || 'nature',
+        unlockedAchievements: progress.unlockedAchievements || [],
     };
 }

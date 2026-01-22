@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BottomNav from '../components/BottomNav';
 import { useUser } from '../context/UserContext';
 import { getDayContent } from '../data/curriculum';
 import {
@@ -53,15 +52,15 @@ const Library: React.FC = () => {
 
   return (
     <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'
-      } font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
+      } font-['Epilogue'] pb-16 overflow-hidden transition-colors duration-300`}>
 
       {/* Logo Watermark */}
       <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
       {/* Header */}
-      <header className={`sticky top-0 z-30 px-5 pt-12 pb-4 ${isDark ? 'bg-[#0B1015]/80' : 'bg-[#fafafa]/80'
+      <header className={`sticky top-0 z-30 px-4 pt-4 pb-3 ${isDark ? 'bg-[#0B1015]/80' : 'bg-[#fafafa]/80'
         } backdrop-blur-xl`}>
-        <h1 className={`text-3xl font-bold tracking-tight mb-4 ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+        <h1 className={`text-2xl font-bold tracking-tight mb-3 ${isDark ? 'text-white' : 'text-[#111817]'}`}>
           Library
         </h1>
 
@@ -89,7 +88,7 @@ const Library: React.FC = () => {
         </div>
       </header>
 
-      <main className="relative z-10 px-5 pt-4 space-y-8">
+      <main className="relative z-10 px-4 pt-2 space-y-4">
 
         {/* Favorites Section */}
         {favoriteDays.length > 0 && (
@@ -142,10 +141,10 @@ const Library: React.FC = () => {
 
           <div
             onClick={() => navigate('/player')}
-            className={`relative rounded-3xl overflow-hidden cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isDark ? 'bg-[#161B22]' : 'bg-white'
+            className={`relative rounded-xl overflow-hidden cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isDark ? 'bg-[#161B22]' : 'bg-white'
               } shadow-sm`}
           >
-            <div className="flex items-center p-5 gap-4">
+            <div className="flex items-center p-4 gap-4">
               <div className="flex-1">
                 <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isDark ? 'bg-[#5EEAD4]/10' : 'bg-[#4b9b87]/10'
                   } mb-2`}>
@@ -163,7 +162,7 @@ const Library: React.FC = () => {
                 </p>
               </div>
 
-              <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
+              <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
                 <MeditationIllustration className="w-full h-full" />
               </div>
             </div>
@@ -182,12 +181,12 @@ const Library: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(isSelected ? null : cat.id)}
-                  className={`flex flex-col items-center p-4 rounded-2xl transition-all ${isSelected
+                  className={`flex flex-col items-center p-3 rounded-xl transition-all ${isSelected
                     ? 'ring-2 ring-[#4b9b87] dark:ring-[#5EEAD4]'
                     : ''
                     } ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm hover:shadow-md`}
                 >
-                  <div className="w-16 h-16 mb-2">
+                  <div className="w-12 h-12 mb-2">
                     <cat.Icon className="w-full h-full" />
                   </div>
                   <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
@@ -254,8 +253,6 @@ const Library: React.FC = () => {
           </section>
         )}
       </main>
-
-      <BottomNav />
     </div>
   );
 };

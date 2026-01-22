@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import BottomNav from '../components/BottomNav';
 import { useUser } from '../context/UserContext';
 import { getDayContent, getBlockInfo } from '../data/curriculum';
 import { LogoWatermark } from '../components/Illustrations';
+import { requestNotificationPermission, sendWelcomeNotification } from '../src/services/notificationService';
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { user, getTodayCompletion, getCurrentBlock } = useUser();
+    const { user, getTodayCompletion, getCurrentBlock, advanceDay } = useUser();
     const isDark = user.nightMode;
 
     const todayCompletion = getTodayCompletion();
@@ -32,16 +32,16 @@ const Dashboard: React.FC = () => {
     });
 
     return (
-        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
+        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-16 overflow-hidden transition-colors duration-300`}>
 
             <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
             {/* Header */}
-            <header className={`sticky top-0 z-30 px-6 pt-12 pb-4 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'} backdrop-blur-xl`}>
+            <header className={`sticky top-0 z-30 px-6 pt-4 pb-3 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'} backdrop-blur-xl`}>
                 <div className="flex items-center justify-between">
                     <div>
                         <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Your Journey</p>
-                        <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                        <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                             Dashboard
                         </h1>
                     </div>
@@ -51,17 +51,26 @@ const Dashboard: React.FC = () => {
                 </div>
             </header>
 
-            <main className="relative z-10 px-6 space-y-6">
+            <main className="relative z-10 px-4 space-y-3">
 
                 {/* Today's Progress Card */}
-                <div className={`rounded-3xl p-6 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm`}>
+                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm`}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                             Today's Progress
                         </h2>
-                        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {completedToday}/3 complete
-                        </span>
+                        {completedToday === 3 ? (
+                            <button
+                                onClick={() => user.currentDay < 30 && advanceDay()}
+                                className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${isDark ? 'bg-[#3D6B5B] text-white' : 'bg-[#3D6B5B] text-white'} shadow-sm active:scale-95`}
+                            >
+                                Start Day {user.currentDay + 1} →
+                            </button>
+                        ) : (
+                            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {completedToday}/3 complete
+                            </span>
+                        )}
                     </div>
 
                     {/* Progress bar */}
@@ -108,10 +117,10 @@ const Dashboard: React.FC = () => {
 
                 {/* Sleep Readiness Indicator - For Rohan persona or night routine users */}
                 {(user.persona === 'rohan' || user.routineTime === 'night') && (
-                    <div className={`rounded-3xl p-6 ${isDark ? 'bg-gradient-to-br from-indigo-950 to-[#161B22]' : 'bg-gradient-to-br from-indigo-50 to-white'} shadow-sm ring-1 ${isDark ? 'ring-indigo-500/20' : 'ring-indigo-100'}`}>
+                    <div className={`rounded-xl p-4 ${isDark ? 'bg-gradient-to-br from-indigo-950 to-[#161B22]' : 'bg-gradient-to-br from-indigo-50 to-white'} shadow-sm ring-1 ${isDark ? 'ring-indigo-500/20' : 'ring-indigo-100'}`}>
                         <div className="flex items-center gap-4">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-indigo-500/20' : 'bg-indigo-100'}`}>
-                                <span className={`material-symbols-outlined text-[28px] ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-indigo-500/20' : 'bg-indigo-100'}`}>
+                                <span className={`material-symbols-outlined text-[24px] ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                     bedtime
                                 </span>
                             </div>
@@ -168,7 +177,7 @@ const Dashboard: React.FC = () => {
                 )}
 
                 {/* 7-Day Mood Trends Chart */}
-                <div className={`rounded-3xl p-6 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
+                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                             Mood Trends
@@ -179,7 +188,7 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Mood Chart */}
-                    <div className="flex items-end justify-between gap-2 h-32 mb-4">
+                    <div className="flex items-end justify-between gap-2 h-24 mb-3">
                         {(() => {
                             const last7Days = Array.from({ length: 7 }, (_, i) => {
                                 const dayNum = user.currentDay - 6 + i;
@@ -268,11 +277,122 @@ const Dashboard: React.FC = () => {
                     })()}
                 </div>
 
-                {/* Current Block */}
-                <div className={`rounded-3xl p-6 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
+                {/* Notification Permission */}
+                {
+                    'Notification' in window && Notification.permission === 'default' && (
+                        <div className={`mt-5 rounded-xl p-4 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm flex items-center justify-between`}>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                                    <span className="material-symbols-outlined text-[20px]">notifications</span>
+                                </div>
+                                <div>
+                                    <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>Enable Reminders</h3>
+                                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Get daily mindful nudges</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    const granted = await requestNotificationPermission();
+                                    if (granted) sendWelcomeNotification();
+                                    navigate(0); // Refresh to hide card
+                                }}
+                                className={`text-xs font-bold px-4 py-2 rounded-full ${isDark ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'}`}
+                            >
+                                Enable
+                            </button>
+                        </div>
+                    )
+                }
+
+                {/* Achievements & Stats - NEW */}
+                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                            Achievements
+                        </h2>
+                        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {user.unlockedAchievements.length} unlocked
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+                        {[
+                            { id: 'seedling', icon: '🌱', label: 'Seedling' },
+                            { id: 'fire', icon: '🔥', label: 'On Fire' },
+                            { id: 'zen', icon: '🧘', label: 'Zen Master' },
+                            { id: 'star', icon: '🌟', label: 'Star' },
+                        ].map((badge) => {
+                            const isUnlocked = user.unlockedAchievements.includes(badge.id);
+                            return (
+                                <div
+                                    key={badge.id}
+                                    className={`flex-shrink-0 flex flex-col items-center gap-1 p-2 w-20 rounded-xl ${isUnlocked
+                                        ? isDark ? 'bg-white/5' : 'bg-gray-50'
+                                        : 'opacity-40 grayscale'
+                                        }`}
+                                >
+                                    <span className="text-2xl">{badge.icon}</span>
+                                    <span className={`text-[10px] font-bold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {badge.label}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Mini Stats */}
+                    <div className={`mt-3 pt-3 border-t ${isDark ? 'border-white/5' : 'border-gray-100'} flex justify-around`}>
+                        <div className="text-center">
+                            <p className={`text-lg font-bold ${isDark ? 'text-teal-400' : 'text-[#37a49f]'}`}>{user.streak}</p>
+                            <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Day Streak</p>
+                        </div>
+                        <div className="text-center">
+                            <p className={`text-lg font-bold ${isDark ? 'text-teal-400' : 'text-[#37a49f]'}`}>{user.sessionCompletions.length * 10}m</p>
+                            <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Mindful Mins</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Professional Support - Monetization Hook */}
+                <div className={`rounded-xl p-4 ${isDark ? 'bg-gradient-to-br from-[#1e3a3a] to-[#161B22]' : 'bg-gradient-to-br from-[#e8f5f3] to-white'} shadow-sm ring-1 ${isDark ? 'ring-[#5EEAD4]/20' : 'ring-[#4b9b87]/20'}`}>
                     <div className="flex items-center gap-4">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#5EEAD4]/20' : 'bg-[#4b9b87]/10'}`}>
-                            <span className={`material-symbols-outlined text-[28px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-[#5EEAD4]/20' : 'bg-[#4b9b87]/10'}`}>
+                            <span className={`material-symbols-outlined text-[24px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
+                                psychology
+                            </span>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                                Talk to a Professional
+                            </h3>
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                Get personalized guidance from expert psychologists.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            if (user.subscriptionStatus === 'premium') {
+                                window.open('https://mentamind.in/', '_blank');
+                            } else {
+                                navigate('/pricing');
+                            }
+                        }}
+                        className={`w-full mt-4 py-3 rounded-xl font-bold text-sm transition-all ${isDark
+                            ? 'bg-[#5EEAD4] text-[#0B1015] hover:bg-[#4CD9C3]'
+                            : 'bg-[#4b9b87] text-white hover:bg-[#3d8b7a]'
+                            }`}
+                    >
+                        {user.subscriptionStatus === 'premium' ? 'Book Appointment' : 'Upgrade to Book'}
+                    </button>
+                </div>
+
+                {/* Current Block */}
+                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
+                    <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-[#5EEAD4]/20' : 'bg-[#4b9b87]/10'}`}>
+                            <span className={`material-symbols-outlined text-[24px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
                                 {currentBlock === 1 ? 'foundation' : currentBlock === 2 ? 'landscape' : 'integration_instructions'}
                             </span>
                         </div>
@@ -291,12 +411,12 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Journey Timeline */}
-                <div className={`rounded-3xl p-6 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
+                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
                     <h2 className={`font-bold mb-4 ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                         30-Day Journey
                     </h2>
 
-                    <div className="grid grid-cols-10 gap-1.5">
+                    <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-1.5">
                         {journeyDays.map((d) => (
                             <div
                                 key={d.day}
@@ -337,7 +457,7 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={() => navigate('/programs')}
-                        className={`p-4 rounded-2xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm text-left`}
+                        className={`p-3 rounded-xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm text-left`}
                     >
                         <span className={`material-symbols-outlined text-[24px] mb-2 ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
                             grid_view
@@ -348,7 +468,7 @@ const Dashboard: React.FC = () => {
 
                     <button
                         onClick={() => navigate('/profile')}
-                        className={`p-4 rounded-2xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm text-left`}
+                        className={`p-3 rounded-xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm text-left`}
                     >
                         <span className={`material-symbols-outlined text-[24px] mb-2 ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
                             settings
@@ -358,8 +478,6 @@ const Dashboard: React.FC = () => {
                     </button>
                 </div>
             </main>
-
-            <BottomNav />
         </div>
     );
 };

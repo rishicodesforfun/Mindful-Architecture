@@ -25,8 +25,7 @@ const DayView: React.FC = () => {
     }
 
     const handleCompleteTask = () => {
-        completeSession('task');
-        navigate('/journey');
+        completeSession('task', day);
     };
 
     const handleStartMeditation = () => {
@@ -37,9 +36,12 @@ const DayView: React.FC = () => {
         navigate(`/journal?day=${day}`);
     };
 
-    const isTaskComplete = todayCompletion?.task && user.currentDay === day;
-    const isMeditationComplete = todayCompletion?.meditation && user.currentDay === day;
-    const isReflectionComplete = todayCompletion?.reflection && user.currentDay === day;
+    const dayCompletion = user.sessionCompletions.find(s => s.day === day);
+
+    // Check completion for THIS day, regardless of user.currentDay
+    const isTaskComplete = dayCompletion?.task || false;
+    const isMeditationComplete = dayCompletion?.meditation || false;
+    const isReflectionComplete = dayCompletion?.reflection || false;
 
     return (
         <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#fcfcfc]'} font-['Manrope'] overflow-hidden`}>

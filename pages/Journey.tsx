@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BottomNav from '../components/BottomNav';
 import { useUser } from '../context/UserContext';
 import curriculum, { getBlockInfo } from '../data/curriculum';
 import { LogoWatermark } from '../components/Illustrations';
@@ -30,20 +29,42 @@ const Journey: React.FC = () => {
 
     const BlockCard = ({ block, name, days, color }: { block: 1 | 2 | 3, name: string, days: typeof block1Days, color: string }) => {
         const info = getBlockInfo(block);
-        const completedDays = days.filter(d => getDayStatus(d.day) === 'complete').length;
+
+        // Calculate granular progress (sessions vs days)
+        // Total possible checkmarks = days * 3 (meditation + reflection + task)
+        const totalItems = days.length * 3;
+        const completedItems = days.reduce((acc, day) => {
+            const s = user.sessionCompletions.find(sc => sc.day === day.day);
+            if (!s) return acc;
+            return acc + (s.meditation ? 1 : 0) + (s.reflection ? 1 : 0) + (s.task ? 1 : 0);
+        }, 0);
+
+        const percentComplete = Math.round((completedItems / totalItems) * 100);
+
+        // For the text logic, we still show "Days Completed" or maybe "Activities Completed"?
+        // User asked for progress bar to keep up.
+        // Let's keep "X/10" as days purely for the text label if that's preferred, OR switch to %.
+        // The screenshot shows "2/10". This likely refers to days. 
+        // Let's keep the text as "Days Fully Complete" but the *bar* as granular?
+        // Actually, "2/10" is misleading if I have done 9.9 days of work.
+        // Let's change the text to show percentage or be more nuanced?
+        // Design constraints: existing UI shows "2/10". 
+        // Let's stick to days for the text count, but update the BAR width to be granular.
+
+        const fullyCompletedDays = days.filter(d => getDayStatus(d.day) === 'complete').length;
         const isActive = block === Math.ceil(user.currentDay / 10) || (user.currentDay > 20 && block === 3);
 
         return (
-            <div className={`rounded-3xl overflow-hidden ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-lg`}>
+            <div className={`rounded-xl overflow-hidden ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-lg`}>
                 {/* Block Header */}
                 <button
                     onClick={() => setSelectedBlock(selectedBlock === block ? null : block)}
-                    className={`w-full p-6 text-left transition-all`}
+                    className={`w-full p-4 text-left transition-all`}
                 >
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center`}>
-                                <span className="material-symbols-outlined text-white text-[24px]">
+                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
+                                <span className="material-symbols-outlined text-white text-[20px]">
                                     {block === 1 ? 'foundation' : block === 2 ? 'landscape' : 'integration_instructions'}
                                 </span>
                             </div>
@@ -65,7 +86,7 @@ const Journey: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-3">
                             <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {completedDays}/{days.length}
+                                {fullyCompletedDays}/{days.length} days
                             </span>
                             <span className={`material-symbols-outlined transition-transform ${selectedBlock === block ? 'rotate-180' : ''} ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                 expand_more
@@ -77,15 +98,15 @@ const Journey: React.FC = () => {
                     <div className={`h-1.5 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-100'} overflow-hidden`}>
                         <div
                             className={`h-full bg-gradient-to-r ${color} rounded-full transition-all duration-500`}
-                            style={{ width: `${(completedDays / days.length) * 100}%` }}
+                            style={{ width: `${percentComplete}%` }}
                         />
                     </div>
                 </button>
 
                 {/* Days List */}
                 {selectedBlock === block && (
-                    <div className={`px-6 pb-6 space-y-2 border-t ${isDark ? 'border-white/5' : 'border-gray-100'}`}>
-                        <div className="pt-4 grid grid-cols-2 gap-2">
+                    <div className={`px-4 pb-4 space-y-2 border-t ${isDark ? 'border-white/5' : 'border-gray-100'}`}>
+                        <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {days.map((day) => {
                                 const status = getDayStatus(day.day);
                                 const isCurrent = day.day === user.currentDay;
@@ -134,7 +155,7 @@ const Journey: React.FC = () => {
     };
 
     return (
-        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#fcfcfc]'} font-['Manrope'] pb-24 overflow-hidden transition-colors duration-300`}>
+        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#fcfcfc]'} font-['Manrope'] pb-16 overflow-hidden transition-colors duration-300`}>
 
             {/* Ambient background */}
             <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#3D6B5B]/5 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
@@ -143,11 +164,11 @@ const Journey: React.FC = () => {
             <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
             {/* Header */}
-            <header className={`sticky top-0 z-30 px-6 pt-12 pb-4 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#fcfcfc]/90'} backdrop-blur-xl`}>
+            <header className={`sticky top-0 z-30 px-4 pt-4 pb-3 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#fcfcfc]/90'} backdrop-blur-xl`}>
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>30-Day Program</p>
-                        <h1 className={`text-3xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                        <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>30-Day Program</p>
+                        <h1 className={`text-2xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                             Your Journey
                         </h1>
                     </div>
@@ -157,23 +178,23 @@ const Journey: React.FC = () => {
                 </div>
             </header>
 
-            <main className="relative z-10 px-6 space-y-4">
+            <main className="relative z-10 px-4 space-y-3">
 
                 {/* Progress Overview */}
-                <div className={`rounded-3xl p-6 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-lg`}>
+                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-lg`}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
                             Overall Progress
                         </h2>
                         <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {Math.round((user.currentDay / 30) * 100)}%
+                            {Math.round((user.sessionCompletions.reduce((acc, s) => acc + (s.meditation ? 1 : 0) + (s.task ? 1 : 0) + (s.reflection ? 1 : 0), 0) / (30 * 3)) * 100)}%
                         </span>
                     </div>
 
                     <div className={`h-3 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-100'} overflow-hidden`}>
                         <div
                             className="h-full bg-gradient-to-r from-[#3D6B5B] to-[#4FD1C5] rounded-full transition-all duration-500"
-                            style={{ width: `${(user.currentDay / 30) * 100}%` }}
+                            style={{ width: `${Math.round((user.sessionCompletions.reduce((acc, s) => acc + (s.meditation ? 1 : 0) + (s.task ? 1 : 0) + (s.reflection ? 1 : 0), 0) / (30 * 3)) * 100)}%` }}
                         />
                     </div>
 
@@ -198,8 +219,6 @@ const Journey: React.FC = () => {
                 <BlockCard block={3} name="Integration" days={block3Days} color="from-purple-400 to-purple-600" />
 
             </main>
-
-            <BottomNav />
         </div>
     );
 };

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { getDayContent } from '../data/curriculum';
 import { WalkingPersonIllustration, LogoWatermark } from '../components/Illustrations';
@@ -9,9 +9,15 @@ const Task: React.FC = () => {
   const { user, completeSession, getTodayCompletion } = useUser();
   const [showReminder, setShowReminder] = useState(false);
 
-  const todayCompletion = getTodayCompletion();
-  const isCompleted = todayCompletion?.task || false;
-  const todayContent = getDayContent(user.currentDay);
+  const [searchParams] = useSearchParams();
+  const dayParam = searchParams.get('day');
+  const viewingDay = dayParam ? parseInt(dayParam, 10) : user.currentDay;
+
+  // Find completion for THIS specific day
+  const dayCompletion = user.sessionCompletions.find(s => s.day === viewingDay);
+  const isCompleted = dayCompletion?.task || false;
+
+  const todayContent = getDayContent(viewingDay);
   const isDark = user.nightMode;
 
   const taskData = todayContent?.task || {
@@ -22,16 +28,31 @@ const Task: React.FC = () => {
     icon: 'directions_walk'
   };
 
+  // Map content fields based on source (Curriculum vs Fallback)
+  // Curriculum: subtitle (short), description (long)
+  // Fallback: description (short), details (long)
+  const displaySubtitle = 'subtitle' in taskData ? (taskData as any).subtitle : taskData.description;
+  const displayBody = 'details' in taskData ? (taskData as any).details : taskData.description;
+
   const handleComplete = () => {
-    completeSession('task');
-    navigate('/home');
+    completeSession('task', viewingDay);
+    if (dayParam) {
+      navigate(`/day/${viewingDay}`);
+    } else {
+      navigate('/home');
+    }
   };
 
   const handleRemindLater = () => {
     setShowReminder(true);
     setTimeout(() => {
       setShowReminder(false);
-      navigate('/home');
+      setShowReminder(false);
+      if (dayParam) {
+        navigate(`/day/${viewingDay}`);
+      } else {
+        navigate('/home');
+      }
     }, 1500);
   };
 
@@ -54,7 +75,7 @@ const Task: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <span className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-            Day {user.currentDay.toString().padStart(2, '0')}
+            Day {viewingDay.toString().padStart(2, '0')}
           </span>
           <span className={`${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>•</span>
           <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -114,7 +135,7 @@ const Task: React.FC = () => {
 
             {/* Subtitle */}
             <p className={`text-base mb-4 ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>
-              {taskData.description}
+              {displaySubtitle}
             </p>
 
             {/* Divider */}
@@ -122,7 +143,7 @@ const Task: React.FC = () => {
 
             {/* Details */}
             <p className={`text-base leading-relaxed mb-6 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              {taskData.details || 'Today, take 10 minutes to walk without a destination. Focus solely on the sensation of your feet touching the ground and the rhythm of your breath. Notice the textures and sounds around you.'}
+              {displayBody}
             </p>
 
             {/* Action Buttons */}

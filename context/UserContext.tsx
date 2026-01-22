@@ -57,12 +57,23 @@ export interface UserState {
     nightMode: boolean;
     shortSessionMode: boolean;
 
+    // Subscription
+    subscriptionStatus: 'free' | 'premium';
+
     // Favorites
     favoriteDays: number[];
 
     // Onboarding
     hasCompletedOnboarding: boolean;
+
+    // Preferences
+    soundPreference: SoundOption;
+
+    // Gamification
+    unlockedAchievements: string[]; // IDs of unlocked badges
 }
+
+export type SoundOption = 'nature' | 'ambient' | 'voice' | 'silent';
 
 interface UserContextType {
     user: UserState;
@@ -85,7 +96,7 @@ interface UserContextType {
 
     // New unified functions
     saveReflection: (entry: { day: number; mood?: string; journal: string; date: string }) => void;
-    completeSession: (type: 'meditation' | 'reflection' | 'task' | 'moodCheckin') => void;
+    completeSession: (type: 'meditation' | 'reflection' | 'task' | 'moodCheckin', day?: number) => void;
     advanceDay: () => void;
 
     // Feature toggles
@@ -106,6 +117,13 @@ interface UserContextType {
     // Logout
     logout: () => Promise<void>;
     clearProgressAndLogout: () => Promise<void>;
+
+    // Subscription
+    upgradeToPremium: () => void;
+    bookAppointment: () => void;
+
+    // Preferences
+    setSoundPreference: (sound: SoundOption) => void;
 }
 
 const defaultUserState: UserState = {
@@ -125,8 +143,11 @@ const defaultUserState: UserState = {
     pauseExpiresAt: null,
     nightMode: false,
     shortSessionMode: false,
+    subscriptionStatus: 'free',
     favoriteDays: [],
     hasCompletedOnboarding: false,
+    soundPreference: 'nature',
+    unlockedAchievements: [],
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -229,16 +250,59 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const setRoutineTime = (time: RoutineTime) => setUser(prev => ({ ...prev, routineTime: time }));
 
     const completeOnboarding = () => setUser(prev => ({ ...prev, hasCompletedOnboarding: true }));
+    const setSoundPreference = (sound: SoundOption) => setUser(prev => ({ ...prev, soundPreference: sound }));
+
+    // Achievement Logic
+    const checkAchievements = useCallback((currentState: UserState) => {
+        const newUnlocks: string[] = [];
+        // Default to empty array if undefined to prevent crash
+        const { streak, sessionCompletions, unlockedAchievements = [] } = currentState;
+
+        // 1. Seedling (First Session)
+        if (sessionCompletions.length >= 1 && !unlockedAchievements.includes('seedling')) {
+            newUnlocks.push('seedling');
+        }
+
+        // 2. On Fire (7 Day Streak)
+        if (streak >= 7 && !unlockedAchievements.includes('fire')) {
+            newUnlocks.push('fire');
+        }
+
+        // 3. Zen Master (10 Sessions)
+        if (sessionCompletions.length >= 10 && !unlockedAchievements.includes('zen')) {
+            newUnlocks.push('zen');
+        }
+
+        // 4. Star (30 Days / Program Complete) - Example logic
+        if (currentState.currentDay >= 30 && !unlockedAchievements.includes('star')) {
+            newUnlocks.push('star');
+        }
+
+        if (newUnlocks.length > 0) {
+            setUser(prev => ({
+                ...prev,
+                unlockedAchievements: [...prev.unlockedAchievements, ...newUnlocks]
+            }));
+            // Optional: You could trigger a toast/notification here
+        }
+    }, []);
+
+    // Check achievements whenever relevant state changes
+    useEffect(() => {
+        if (!isLoading && user.name) {
+            checkAchievements(user);
+        }
+    }, [user.streak, user.sessionCompletions.length, user.currentDay, checkAchievements, isLoading, user.name]);
 
     // Session completions
-    const updateTodaySession = (updates: Partial<SessionCompletion>) => {
+    const updateSessionForDay = (day: number, updates: Partial<SessionCompletion>) => {
         setUser(prev => {
-            const existing = prev.sessionCompletions.find(s => s.day === prev.currentDay);
+            const existing = prev.sessionCompletions.find(s => s.day === day);
             if (existing) {
                 return {
                     ...prev,
                     sessionCompletions: prev.sessionCompletions.map(s =>
-                        s.day === prev.currentDay ? { ...s, ...updates } : s
+                        s.day === day ? { ...s, ...updates } : s
                     ),
                 };
             } else {
@@ -247,7 +311,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     sessionCompletions: [
                         ...prev.sessionCompletions,
                         {
-                            day: prev.currentDay,
+                            day: day,
                             meditation: false,
                             reflection: false,
                             task: false,
@@ -261,9 +325,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
     };
 
-    const completeMeditation = () => updateTodaySession({ meditation: true });
-    const completeReflection = (_text: string) => updateTodaySession({ reflection: true });
-    const completeTask = () => updateTodaySession({ task: true });
+    const completeMeditation = (day?: number) => completeSession('meditation', day);
+    const completeReflection = (_text: string, day?: number) => completeSession('reflection', day);
+    const completeTask = (day?: number) => completeSession('task', day);
 
     const completeMoodCheckin = (mood: 1 | 2 | 3 | 4 | 5, emotion?: string) => {
         setUser(prev => ({
@@ -273,7 +337,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 { day: prev.currentDay, mood, emotion, timestamp: new Date() },
             ],
         }));
-        updateTodaySession({ moodCheckin: true });
+        updateSessionForDay(user.currentDay, { moodCheckin: true });
     };
 
     const skipDay = () => {
@@ -290,8 +354,31 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }));
     };
 
-    const completeSession = (type: 'meditation' | 'reflection' | 'task' | 'moodCheckin') => {
-        updateTodaySession({ [type]: true });
+    const completeSession = (type: 'meditation' | 'reflection' | 'task' | 'moodCheckin', day?: number) => {
+        const targetDay = day || user.currentDay;
+
+        // 1. Update the session completion
+        updateSessionForDay(targetDay, { [type]: true });
+
+        // 2. Check if we should auto-advance (only if working on current day)
+        if (targetDay === user.currentDay) {
+            // We need to look at the updated state, but functional updates are batched/async.
+            // So we peek at the *current* user state + this new update to decide.
+            const currentCompletion = user.sessionCompletions.find(s => s.day === targetDay) || {
+                day: targetDay, meditation: false, reflection: false, task: false, moodCheckin: false, timestamp: new Date()
+            };
+
+            // Apply the new update locally to check
+            const updatedCompletion = { ...currentCompletion, [type]: true };
+
+            if (updatedCompletion.meditation && updatedCompletion.reflection && updatedCompletion.task) {
+                // Auto-advance if everything is done!
+                // Add a small delay so the user sees the checkmark animation first
+                setTimeout(() => {
+                    advanceDay();
+                }, 1500);
+            }
+        }
     };
 
     const advanceDay = () => {
@@ -368,6 +455,16 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         authLogout();
     };
 
+    const upgradeToPremium = () => {
+        setUser(prev => ({ ...prev, subscriptionStatus: 'premium' }));
+    };
+
+    const bookAppointment = () => {
+        if (user.subscriptionStatus === 'premium') {
+            window.open('https://mentamind.in/', '_blank');
+        }
+    };
+
     return (
         <UserContext.Provider value={{
             user,
@@ -379,7 +476,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setRoutineTime,
             completeOnboarding,
             completeMeditation,
-            completeReflection,
+            completeReflection: (text) => completeReflection(text), // adapter for interface
             completeTask,
             completeMoodCheckin,
             skipDay,
@@ -397,6 +494,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             getTodayCompletion,
             logout,
             clearProgressAndLogout,
+            upgradeToPremium,
+            bookAppointment,
+            setSoundPreference,
         }}>
             {children}
         </UserContext.Provider>

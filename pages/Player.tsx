@@ -15,18 +15,149 @@ interface Session {
 const Player: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, completeSession } = useUser();
+  const { user, completeSession, setSoundPreference } = useUser();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
+  const [volume, setVolume] = useState(0.5);
   const [breathPhase, setBreathPhase] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [introFinished, setIntroFinished] = useState(false);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, []);
 
   // Get day from URL param or use current day
   const dayParam = searchParams.get('day');
   const viewingDay = dayParam ? parseInt(dayParam, 10) : user.currentDay;
   const dayContent = getDayContent(viewingDay);
+
+  // Background Audio Logic - plays after intro speech finishes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      // Start audio only after intro TTS finishes (or if there's no script)
+      const shouldPlay = isPlaying && (introFinished || !dayContent?.meditation.script);
+      if (shouldPlay) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.error("Audio playback error:", e);
+          });
+        }
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying, introFinished, dayContent, volume, user.soundPreference]);
+
+  // Load voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const available = window.speechSynthesis.getVoices();
+      setVoices(available);
+
+      // Try to find a "Natural" or good default voice
+      const preferred = available.find(v =>
+        v.name.includes('Natural') ||
+        v.name.includes('Google US English') ||
+        v.name.includes('Zira')
+      );
+      if (preferred) setSelectedVoice(preferred);
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => { window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
+
+  // TTS Logic - Intro Script
+  useEffect(() => {
+    // Reset intro state when session changes
+    setIntroFinished(false);
+
+    // Cancel any ongoing speech when component unmounts or session changes
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, [selectedSession]);
+
+  useEffect(() => {
+    if (!selectedSession || !dayContent?.meditation.script) return;
+
+    if (isPlaying && !introFinished) {
+      // Start speaking intro
+      const utterance = new SpeechSynthesisUtterance(dayContent.meditation.script);
+      utterance.rate = 0.85;
+      utterance.pitch = 0.95;
+      if (selectedVoice) utterance.voice = selectedVoice;
+
+      utterance.onend = () => {
+        setIntroFinished(true);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } else if (!isPlaying) {
+      // Pause/Cancel speech
+      window.speechSynthesis.cancel();
+    }
+  }, [isPlaying, selectedSession, dayContent, selectedVoice, introFinished]);
+
+  // Breathing animation state
+  const [breathState, setBreathState] = useState<'in' | 'hold' | 'out'>('in');
+
+  // Breathing Loop Logic (Visual Only)
+  useEffect(() => {
+    let mounted = true;
+    if (!isPlaying) return;
+
+    const cycle = async () => {
+      if (!mounted || !isPlaying) return;
+
+      // Inhale (4s)
+      setBreathState('in');
+      await new Promise(r => setTimeout(r, 4000));
+
+      if (!mounted || !isPlaying) return;
+
+      // Hold (2s)
+      setBreathState('hold');
+      await new Promise(r => setTimeout(r, 2000));
+
+      if (!mounted || !isPlaying) return;
+
+      // Exhale (4s)
+      setBreathState('out');
+      await new Promise(r => setTimeout(r, 4000));
+
+      if (!mounted || !isPlaying) return;
+
+      // Hold (2s)
+      setBreathState('hold');
+      await new Promise(r => setTimeout(r, 2000));
+
+      // Loop
+      if (mounted && isPlaying) cycle();
+    };
+
+    cycle();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isPlaying]);
 
   // Build sessions list specific to this day
   const sessions: Session[] = dayContent ? [
@@ -97,7 +228,7 @@ const Player: React.FC = () => {
 
             // Auto-complete the session and navigate
             setTimeout(() => {
-              completeSession('meditation');
+              completeSession('meditation', viewingDay);
               // Navigate back after completing
               if (dayParam) {
                 navigate(`/day/${viewingDay}`);
@@ -116,20 +247,9 @@ const Player: React.FC = () => {
     return () => clearInterval(interval);
   }, [isPlaying, selectedSession, completeSession]);
 
-  // Breathing animation
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setBreathPhase((prev) => (prev + 1) % 5);
-      }, 1500);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
   const handleMarkAsDone = () => {
-    completeSession('meditation');
-    // Navigate back to day view if coming from journey, else home
+    window.speechSynthesis.cancel();
+    completeSession('meditation', viewingDay);
     if (dayParam) {
       navigate(`/day/${viewingDay}`);
     } else {
@@ -148,7 +268,6 @@ const Player: React.FC = () => {
     ? (progress / (selectedSession.duration * 60)) * 100
     : 0;
 
-  const breathTexts = ['BREATHE IN', 'HOLD', 'BREATHE OUT', 'HOLD', 'BREATHE IN'];
   const isDark = user.nightMode;
 
   // Active session view
@@ -161,7 +280,7 @@ const Player: React.FC = () => {
         <FloatingOrbs variant={isDark ? 'dark' : 'light'} />
 
         {/* Header */}
-        <header className="relative z-20 flex items-center justify-between px-6 pt-12 pb-4">
+        <header className="relative z-20 flex items-center justify-between px-4 pt-4 pb-2">
           <button
             onClick={() => setSelectedSession(null)}
             className={`flex h-12 w-12 items-center justify-center rounded-full ${isDark ? 'bg-white/10' : 'bg-white/80'
@@ -173,13 +292,6 @@ const Player: React.FC = () => {
           </button>
 
           <div className="flex items-center gap-3">
-            <button className={`flex h-10 w-10 items-center justify-center rounded-full ${isDark ? 'bg-white/10' : 'bg-white/80'
-              } backdrop-blur-sm`}>
-              <span className={`material-symbols-outlined ${isDark ? 'text-white' : 'text-gray-700'}`} style={{ fontSize: '20px' }}>
-                cast
-              </span>
-            </button>
-
             <button
               onClick={() => setShowOptions(!showOptions)}
               className={`flex h-10 w-10 items-center justify-center rounded-full ${isDark ? 'bg-white/10' : 'bg-white/80'
@@ -195,7 +307,8 @@ const Player: React.FC = () => {
           {showOptions && (
             <div className={`absolute top-28 right-6 ${isDark ? 'bg-[#1C2128]' : 'bg-white'
               } rounded-2xl shadow-xl overflow-hidden z-50 animate-scale-in border ${isDark ? 'border-white/5' : 'border-gray-100'
-              }`}>
+              } min-w-[200px]`}>
+
               <button className={`w-full px-5 py-3 text-left text-sm font-medium ${isDark ? 'text-gray-200 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-50'
                 } flex items-center gap-3`}>
                 <span className="material-symbols-outlined text-[20px] text-gray-400">favorite</span>
@@ -206,106 +319,168 @@ const Player: React.FC = () => {
                 <span className="material-symbols-outlined text-[20px] text-gray-400">share</span>
                 Share Session
               </button>
+
+              <div className={`border-t ${isDark ? 'border-white/5' : 'border-gray-100'} p-4`}>
+                <p className={`text-xs font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Background Sound</p>
+
+                {/* Volume Slider */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className={`material-symbols-outlined ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>volume_down</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className={`flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#37a49f]`}
+                  />
+                  <span className={`material-symbols-outlined ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>volume_up</span>
+                </div>
+
+                {/* Sound Selector */}
+                <div className="space-y-2">
+                  {[
+                    { id: 'nature', label: 'Nature', icon: 'forest' },
+                    { id: 'ambient', label: 'Ambient', icon: 'waves' },
+                    { id: 'silent', label: 'Silent', icon: 'volume_off' },
+                  ].map((sound) => (
+                    <button
+                      key={sound.id}
+                      onClick={() => setSoundPreference(sound.id as any)}
+                      className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${user.soundPreference === sound.id
+                        ? 'bg-[#37a49f]/10 text-[#37a49f] font-bold'
+                        : isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px]">{sound.icon}</span>
+                        {sound.label}
+                      </div>
+                      {user.soundPreference === sound.id && (
+                        <span className="material-symbols-outlined text-[16px]">check</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </header>
 
-        {/* Session Info */}
-        <div className="relative z-10 text-center px-6 mt-8">
-          <h1 className={`text-3xl font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-            {selectedSession.title}
-          </h1>
-          <p className={`text-sm mt-2 ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'} font-medium`}>
-            DAY {viewingDay.toString().padStart(2, '0')} • {selectedSession.duration} MIN
-          </p>
-          {dayContent && (
-            <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              {dayContent.theme}
-            </p>
-          )}
-        </div>
+        {/* Player Controls - Centered Breathing Animation */}
+        <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4">
 
-        {/* Player Controls */}
-        <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
-          <div className="relative w-[260px] h-[260px]">
-            {/* Progress Ring */}
-            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+          {/* Breathing Circle Container */}
+          <div className="relative w-[240px] h-[240px] flex items-center justify-center mb-6">
+            {/* Progress Ring (Static Outer) */}
+            <svg className="absolute inset-0 w-full h-full -rotate-90 z-0 opacity-20" viewBox="0 0 100 100">
               <circle
-                cx="50" cy="50" r="45"
-                fill="none"
-                stroke={isDark ? '#1e3a3a' : '#e5e7eb'}
-                strokeWidth="3"
-                opacity="0.3"
-              />
-              <circle
-                cx="50" cy="50" r="45"
+                cx="50" cy="50" r="48"
                 fill="none"
                 stroke={isDark ? '#4FD1C5' : '#3D6B5B'}
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeDasharray="283"
-                strokeDashoffset={283 - (283 * progressPercent / 100)}
-                className="transition-all duration-300"
-              />
-              {/* Progress dot */}
-              <circle
-                cx={50 + 45 * Math.cos((progressPercent / 100 * 360 - 90) * Math.PI / 180)}
-                cy={50 + 45 * Math.sin((progressPercent / 100 * 360 - 90) * Math.PI / 180)}
-                r="4"
-                fill={isDark ? '#4FD1C5' : '#3D6B5B'}
+                strokeWidth="1"
               />
             </svg>
 
-            {/* Play Button - Neumorphic */}
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full flex items-center justify-center transition-all active:scale-95 ${isDark
-                ? 'bg-[#151E32] shadow-[inset_8px_8px_16px_#0a1020,inset_-8px_-8px_16px_#1e2844]'
-                : 'bg-white shadow-[12px_12px_24px_#d1d1d1,-12px_-12px_24px_#ffffff]'
-                }`}
+            {/* Dynamic Breathing Circle */}
+            <div
+              className={`absolute rounded-full transition-all duration-[4000ms] ease-in-out flex items-center justify-center backdrop-blur-xl
+                ${isDark ? 'bg-[#4FD1C5]/10 shadow-[0_0_60px_rgba(79,209,197,0.2)]' : 'bg-[#3D6B5B]/10 shadow-[0_0_60px_rgba(61,107,91,0.2)]'}
+                ${breathState === 'in' ? 'w-[220px] h-[220px] opacity-100' :
+                  breathState === 'out' ? 'w-[110px] h-[110px] opacity-60' :
+                    'w-[220px] h-[220px] opacity-100' /* Hold uses previous state size essentially? No need logic */
+                } 
+                ${/* Tweaking 'Hold' logic: if we just came from IN, we stay big. If we came from OUT, we stay small. 
+                   Checking current state logic: In -> Hold -> Out -> Hold.
+                   Actually simpler to just set explicit sizes based on phase. 
+                   But with my current cycle logic: 
+                   In (4s) -> Sets to 'in' (Big)
+                   Hold (2s) -> Sets to 'hold' (Stay Big)
+                   Out (4s) -> Sets to 'out' (Small)
+                   Hold (2s) -> Sets to 'hold' (Stay Small) - WAIT, generic 'hold' state is ambiguous.
+                */ ''}
+              `}
+              style={{
+                width: breathState === 'in' ? '220px' : breathState === 'out' ? '110px' : undefined, // Let style override classes for precision if needed? No, classes are fine.
+                height: breathState === 'in' ? '220px' : breathState === 'out' ? '110px' : undefined,
+                // For 'hold', we keep the size of the previous state naturally if we don't change the class. 
+                // But React re-renders. We need specific states or styles.
+                transform: breathState === 'in' ? 'scale(1)' : breathState === 'out' ? 'scale(0.5)' : 'scale(1)', // Let's use scale
+              }}
             >
-              <span
-                className={`material-symbols-outlined text-[56px] ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                {isPlaying ? 'pause' : 'play_arrow'}
-              </span>
-            </button>
+              {/* Inner Core Circle */}
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 transition-all duration-300 ${isDark ? 'bg-[#4FD1C5] text-[#0B1121]' : 'bg-[#3D6B5B] text-white'
+                } shadow-xl`}>
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="w-full h-full flex items-center justify-center rounded-full hover:scale-105 active:scale-95 transition-transform"
+                >
+                  <span className="material-symbols-outlined text-[32px] ml-1">
+                    {isPlaying ? 'pause' : 'play_arrow'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Breathing Text Guide */}
+            {isPlaying && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-24 pointer-events-none">
+                <p className={`text-sm font-bold tracking-[0.2em] uppercase transition-all duration-500 ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'
+                  } opacity-80 animate-pulse`}>
+                  {breathState === 'in' ? 'Breathe In' :
+                    breathState === 'out' ? 'Breathe Out' : 'Hold'}
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Time Display */}
-          <p className={`text-4xl font-bold tabular-nums mt-8 ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-            {formatTime(progress, selectedSession.duration)}
-          </p>
-
-          {/* Description */}
-          {dayContent && (
-            <p className={`text-sm text-center mt-4 max-w-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              {dayContent.meditation.description}
+          {/* Timer Display */}
+          <div className="text-center mb-4">
+            <h2 className={`text-4xl font-bold tabular-nums tracking-tight ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+              {formatTime(progress, selectedSession.duration)}
+            </h2>
+            <p className={`text-sm mt-3 font-medium tracking-wide opacity-60 ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+              {selectedSession.title}
             </p>
-          )}
-        </main>
-
-        {/* Breathing Guide */}
-        <div className="relative z-10 text-center pb-8">
-          <p className={`text-sm font-medium tracking-[0.3em] uppercase ${isDark ? 'text-white/40' : 'text-gray-400'
-            }`}>
-            {isPlaying ? breathTexts[breathPhase] : 'TAP TO START'}
-          </p>
-
-          {/* Breath dots */}
-          <div className="flex justify-center gap-2 mt-3">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${i === breathPhase && isPlaying
-                  ? isDark ? 'bg-[#4FD1C5] scale-125' : 'bg-[#3D6B5B] scale-125'
-                  : isDark ? 'bg-white/20' : 'bg-gray-300'
-                  }`}
-              />
-            ))}
           </div>
-        </div>
+
+          <div className="h-12"></div> {/* Spacer */}
+
+          {/* Voice Selector - Main UI */}
+          <div className="relative z-30">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer transition-all ${isDark
+              ? 'bg-white/10 hover:bg-white/20 text-white'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}>
+              <span className="material-symbols-outlined text-[20px]">record_voice_over</span>
+              <span className="text-sm font-medium pr-2">
+                {selectedVoice ? selectedVoice.name.replace('Microsoft ', '').replace('Google ', '').split(' - ')[0] : 'Select Voice'}
+              </span>
+              <select
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                value={selectedVoice?.name || ''}
+                onChange={(e) => {
+                  const voice = voices.find(v => v.name === e.target.value);
+                  if (voice) setSelectedVoice(voice);
+                  if (isPlaying) {
+                    window.speechSynthesis.cancel();
+                    setIsPlaying(false);
+                    setTimeout(() => setIsPlaying(true), 100);
+                  }
+                }}
+              >
+                {voices.map(v => (
+                  <option key={v.name} value={v.name} className="text-black">
+                    {v.name.replace('Microsoft ', '').replace('Google ', '')}
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined text-[16px] opacity-60">expand_more</span>
+            </div>
+          </div>
+
+        </main>
 
         {/* Celebration Overlay */}
         {showCelebration && (
@@ -327,7 +502,7 @@ const Player: React.FC = () => {
               </p>
               <button
                 onClick={() => {
-                  completeSession('meditation');
+                  completeSession('meditation', viewingDay);
                   if (dayParam) {
                     navigate(`/day/${viewingDay}`);
                   } else {
@@ -335,8 +510,8 @@ const Player: React.FC = () => {
                   }
                 }}
                 className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 ${isDark
-                    ? 'bg-[#4FD1C5] text-[#0B1121]'
-                    : 'bg-[#3D6B5B] text-white'
+                  ? 'bg-[#4FD1C5] text-[#0B1121]'
+                  : 'bg-[#3D6B5B] text-white'
                   } shadow-lg`}
               >
                 Continue →
@@ -346,7 +521,7 @@ const Player: React.FC = () => {
         )}
 
         {/* Bottom Action */}
-        <div className={`relative z-10 px-6 pb-12 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#fafaf9]/90'} backdrop-blur-sm`}>
+        <div className={`relative z-10 px-4 pb-6 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#fafaf9]/90'} backdrop-blur-sm`}>
           <button
             onClick={handleMarkAsDone}
             className="w-full py-4 rounded-2xl bg-[#3D6B5B] text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-[#3D6B5B]/25 hover:shadow-[#3D6B5B]/40 transition-all active:scale-[0.98]"
@@ -362,6 +537,14 @@ const Player: React.FC = () => {
           >
             Choose a different session
           </button>
+
+          <audio
+            ref={audioRef}
+            src={user.soundPreference === 'silent' ? '' : "/assets/audio/meditation_ambient.mp3"}
+            loop
+            onError={(e) => console.error("Audio Load Error:", e.currentTarget.error, e.currentTarget.src)}
+            onCanPlay={() => console.log("Audio ready to play")}
+          />
         </div>
       </div>
     );
@@ -370,10 +553,10 @@ const Player: React.FC = () => {
   // Session selection view - Day specific
   return (
     <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'
-      } font-['Epilogue'] pb-24`}>
+      } font-['Epilogue'] pb-16`}>
 
       {/* Header */}
-      <header className="sticky top-0 z-30 px-6 pt-12 pb-4 bg-inherit">
+      <header className="sticky top-0 z-30 px-4 pt-4 pb-2 bg-inherit">
         <div className="flex items-center gap-4">
           <button
             onClick={() => dayParam ? navigate(`/day/${viewingDay}`) : navigate(-1)}
@@ -383,7 +566,7 @@ const Player: React.FC = () => {
             <span className={`material-symbols-outlined ${isDark ? 'text-white' : 'text-gray-700'}`}>arrow_back</span>
           </button>
           <div>
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+            <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
               Day {viewingDay} Meditation
             </h1>
             {dayContent && (
@@ -396,20 +579,20 @@ const Player: React.FC = () => {
       </header>
 
       {/* Sessions List - Day specific */}
-      <main className="px-6 space-y-3">
+      <main className="px-4 space-y-3">
         {sessions.map((session) => (
           <div
             key={session.id}
             onClick={() => setSelectedSession(session)}
-            className={`p-5 rounded-2xl cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isDark
+            className={`p-4 rounded-xl cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] ${isDark
               ? 'bg-[#161B22] hover:bg-[#1e2429]'
               : 'bg-white shadow-sm hover:shadow-md'
               }`}
           >
             <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#5EEAD4]/10' : 'bg-[#4b9b87]/10'
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-[#5EEAD4]/10' : 'bg-[#4b9b87]/10'
                 }`}>
-                <span className={`material-symbols-outlined text-[28px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'
+                <span className={`material-symbols-outlined text-[24px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'
                   }`} style={{ fontVariationSettings: "'FILL' 1" }}>
                   self_improvement
                 </span>
@@ -436,7 +619,7 @@ const Player: React.FC = () => {
 
         {/* Techniques */}
         {dayContent && (
-          <div className={`mt-6 p-5 rounded-2xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
+          <div className={`mt-4 p-4 rounded-xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
             <h3 className={`font-bold text-sm uppercase tracking-wider mb-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
               Techniques Used
             </h3>
