@@ -8,12 +8,24 @@ import {
   TaskIllustration,
   LogoWatermark
 } from '../components/Illustrations';
+import { requestNotificationPermission, sendWelcomeNotification } from '../src/services/notificationService';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const { user, getTodayCompletion } = useUser();
   const todayCompletion = getTodayCompletion();
   const todayContent = getDayContent(user.currentDay);
+
+  // Auto specific request: Prompt for notifications if on Home
+  React.useEffect(() => {
+    const checkPermission = async () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        const granted = await requestNotificationPermission();
+        if (granted) sendWelcomeNotification();
+      }
+    };
+    checkPermission();
+  }, []);
 
   // Generate week dates
   const getWeekDates = () => {

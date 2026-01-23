@@ -19,6 +19,7 @@ import ProfilePage from './pages/ProfilePage';
 import Library from './pages/Library';
 import Journey from './pages/Journey';
 import DayView from './pages/DayView';
+import DebugPage from './pages/DebugDB';
 
 const AppContent: React.FC = () => {
   const { user } = useUser();
@@ -119,6 +120,11 @@ const AppContent: React.FC = () => {
           <Route path="/library" element={
             <ProtectedRoute>
               <Library />
+            </ProtectedRoute>
+          } />
+          <Route path="/debug" element={
+            <ProtectedRoute>
+              <DebugPage />
             </ProtectedRoute>
           } />
 

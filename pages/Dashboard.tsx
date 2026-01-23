@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { getDayContent, getBlockInfo } from '../data/curriculum';
@@ -9,20 +9,36 @@ const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user, getTodayCompletion, getCurrentBlock, advanceDay } = useUser();
     const isDark = user.nightMode;
+    const [showFullJourney, setShowFullJourney] = useState(false);
+
+    // Auto specific request: Prompt for notifications as soon as dashboard opens
+    React.useEffect(() => {
+        const checkPermission = async () => {
+            if ('Notification' in window && Notification.permission === 'default') {
+                const granted = await requestNotificationPermission();
+                if (granted) sendWelcomeNotification();
+            }
+        };
+        checkPermission();
+    }, []);
 
     const todayCompletion = getTodayCompletion();
     const currentBlock = getCurrentBlock();
     const blockInfo = getBlockInfo(currentBlock);
     const todayContent = getDayContent(user.currentDay);
 
-    // Calculate completed sessions
-    const completedToday = [
-        todayCompletion?.meditation,
-        todayCompletion?.reflection,
-        todayCompletion?.task
-    ].filter(Boolean).length;
+    // Determine the single "Next Step" focus
+    // Priority: Meditation -> Task -> Journal -> Done
+    const getFocusStatus = () => {
+        if (!todayCompletion?.meditation) return 'meditation';
+        if (!todayCompletion?.task) return 'task';
+        if (!todayCompletion?.reflection) return 'reflection';
+        return 'complete';
+    };
 
-    // Journey timeline
+    const focusStatus = getFocusStatus();
+
+    // Journey timeline logic
     const journeyDays = Array.from({ length: 30 }, (_, i) => {
         const day = i + 1;
         const completion = user.sessionCompletions.find(s => s.day === day);
@@ -31,452 +47,235 @@ const Dashboard: React.FC = () => {
         return { day, isComplete, isPartial, isCurrent: day === user.currentDay };
     });
 
+    // 7-Day Window View
+    const getVisibleJourneyDays = () => {
+        if (showFullJourney) return journeyDays;
+
+        // Show current day centered-ish (e.g. starting from currentDay - 3)
+        // Ensure we don't go below 0 or above 30
+        let start = Math.max(0, user.currentDay - 4);
+        const end = Math.min(30, start + 7);
+        // Adjust start if end is capped at 30
+        if (end === 30) start = Math.max(0, 30 - 7);
+
+        return journeyDays.slice(start, end);
+    };
+
+    const visibleDays = getVisibleJourneyDays();
+
     return (
-        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-16 overflow-hidden transition-colors duration-300`}>
+        <div className={`relative min-h-screen ${isDark ? 'bg-[#0B1121]' : 'bg-[#F5F7F4]'} font-['Epilogue'] pb-24 overflow-hidden transition-colors duration-300`}>
 
-            <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <LogoWatermark className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30" />
 
-            {/* Header */}
-            <header className={`sticky top-0 z-30 px-6 pt-4 pb-3 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'} backdrop-blur-xl`}>
+            {/* Header: Personal & Calm */}
+            <header className={`sticky top-0 z-30 px-6 pt-6 pb-2 ${isDark ? 'bg-[#0B1121]/90' : 'bg-[#F5F7F4]/90'} backdrop-blur-xl`}>
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Your Journey</p>
+                        <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {new Date().getHours() < 12 ? 'Good Morning,' : new Date().getHours() < 18 ? 'Good Afternoon,' : 'Good Evening,'}
+                        </p>
                         <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                            Dashboard
+                            {user.name || 'Friend'}
                         </h1>
                     </div>
-                    <div className={`px-3 py-1 rounded-full ${isDark ? 'bg-[#4FD1C5]/20 text-[#4FD1C5]' : 'bg-[#3D6B5B]/10 text-[#3D6B5B]'} text-sm font-bold`}>
-                        Day {user.currentDay}/30
-                    </div>
+                    <button
+                        onClick={() => navigate('/profile')}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-transform hover:scale-105 ${isDark ? 'bg-[#151E32] ring-1 ring-white/10' : 'bg-white shadow-sm'}`}
+                    >
+                        {user.avatar ? (user.avatar === 'avatar1' ? '🧘' : user.avatar === 'avatar2' ? '🌿' : '🙂') : '🙂'}
+                    </button>
                 </div>
             </header>
 
-            <main className="relative z-10 px-4 space-y-3">
+            <main className="relative z-10 px-4 space-y-6 mt-2">
 
-                {/* Today's Progress Card */}
-                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm`}>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                            Today's Progress
+                {/* 1. HERO: The Focus Card */}
+                <section>
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        <h2 className={`font-bold text-sm uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                            Next Step
                         </h2>
-                        {completedToday === 3 ? (
-                            <button
-                                onClick={() => user.currentDay < 30 && advanceDay()}
-                                className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${isDark ? 'bg-[#3D6B5B] text-white' : 'bg-[#3D6B5B] text-white'} shadow-sm active:scale-95`}
-                            >
-                                Start Day {user.currentDay + 1} →
-                            </button>
-                        ) : (
-                            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {completedToday}/3 complete
-                            </span>
-                        )}
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-[#4FD1C5]/10 text-[#4FD1C5]' : 'bg-[#3D6B5B]/10 text-[#3D6B5B]'}`}>
+                            Day {user.currentDay}
+                        </span>
                     </div>
 
-                    {/* Progress bar */}
-                    <div className={`h-2 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-100'} overflow-hidden mb-4`}>
+                    {focusStatus === 'complete' ? (
+                        <div className={`rounded-2xl p-6 text-center ${isDark ? 'bg-gradient-to-br from-[#4b9b87]/20 to-[#151E32] border border-[#4b9b87]/30' : 'bg-gradient-to-br from-[#e8f5f3] to-white border border-[#4b9b87]/10'}`}>
+                            <div className="w-16 h-16 rounded-full bg-[#4b9b87] text-white flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#4b9b87]/30 animate-pulse">
+                                <span className="material-symbols-outlined text-[32px]">check</span>
+                            </div>
+                            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>Day {user.currentDay} Complete!</h3>
+                            <p className={`text-sm mt-1 mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Great work today. Rest well.</p>
+                            {user.currentDay < 30 && (
+                                <button
+                                    onClick={() => advanceDay()}
+                                    className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${isDark ? 'bg-white text-[#111817]' : 'bg-[#111817] text-white'} hover:opacity-90 active:scale-95`}
+                                >
+                                    Start Day {user.currentDay + 1} →
+                                </button>
+                            )}
+                        </div>
+                    ) : (
                         <div
-                            className="h-full bg-gradient-to-r from-[#3D6B5B] to-[#4FD1C5] rounded-full transition-all duration-500"
-                            style={{ width: `${(completedToday / 3) * 100}%` }}
-                        />
-                    </div>
+                            onClick={() => {
+                                if (focusStatus === 'meditation') navigate('/daily-session');
+                                else if (focusStatus === 'task') navigate('/task');
+                                else if (focusStatus === 'reflection') navigate('/journal');
+                            }}
+                            className={`group relative overflow-hidden rounded-2xl p-6 cursor-pointer transition-all hover:shadow-lg active:scale-[0.99] ${isDark ? 'bg-[#151E32] ring-1 ring-white/5' : 'bg-white shadow-sm ring-1 ring-black/5'
+                                }`}
+                        >
+                            <div className={`absolute top-0 left-0 w-1.5 h-full ${focusStatus === 'meditation' ? 'bg-[#3D6B5B] dark:bg-[#4FD1C5]' :
+                                    focusStatus === 'task' ? 'bg-[#60a5fa]' : 'bg-[#e57373]'
+                                }`} />
 
-                    {/* Tasks */}
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${todayCompletion?.meditation ? 'bg-[#3D6B5B] text-white' : isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>
-                                <span className="material-symbols-outlined text-[16px]">{todayCompletion?.meditation ? 'check' : 'spa'}</span>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide mb-2 ${focusStatus === 'meditation' ? 'bg-[#3D6B5B]/10 text-[#3D6B5B] dark:text-[#4FD1C5]' :
+                                            focusStatus === 'task' ? 'bg-[#60a5fa]/10 text-[#60a5fa]' :
+                                                'bg-[#e57373]/10 text-[#e57373]'
+                                        }`}>
+                                        {focusStatus === 'meditation' ? 'Meditation' : focusStatus === 'task' ? 'Mindful Task' : 'Reflection'}
+                                    </span>
+                                    <h3 className={`text-2xl font-bold leading-tight mb-2 ${isDark ? 'text-white' : 'text-[#111817]'}`}>
+                                        {focusStatus === 'meditation' ? (todayContent?.meditation.title || 'Daily Meditation') :
+                                            focusStatus === 'task' ? (todayContent?.task.title || 'Daily Task') :
+                                                'Daily Journal'}
+                                    </h3>
+                                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {focusStatus === 'meditation' ? `${todayContent?.meditation.duration || 10} min audio session` :
+                                            focusStatus === 'task' ? 'Simple activity to practice mindfulness' :
+                                                'Reflect on your day and feelings'}
+                                    </p>
+                                </div>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-white/5 group-hover:bg-white/10' : 'bg-gray-50 group-hover:bg-gray-100'
+                                    }`}>
+                                    <span className={`material-symbols-outlined text-[28px] ${isDark ? 'text-white' : 'text-[#111817]'
+                                        }`}>
+                                        play_arrow
+                                    </span>
+                                </div>
                             </div>
-                            <span className={`flex-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Meditation</span>
-                            {!todayCompletion?.meditation && (
-                                <button onClick={() => navigate('/daily-session')} className={`text-sm font-medium ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>Start →</button>
-                            )}
                         </div>
+                    )}
+                </section>
 
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${todayCompletion?.reflection ? 'bg-[#3D6B5B] text-white' : isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>
-                                <span className="material-symbols-outlined text-[16px]">{todayCompletion?.reflection ? 'check' : 'edit_note'}</span>
+                {/* 2. STATS SCROLL: Horizontal Strip */}
+                <section>
+                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                        {/* Streak */}
+                        <div className={`min-w-[120px] flex-1 p-3 rounded-xl flex items-center gap-3 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-500'}`}>
+                                <span className="material-symbols-outlined">local_fire_department</span>
                             </div>
-                            <span className={`flex-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Journal</span>
-                            {!todayCompletion?.reflection && (
-                                <button onClick={() => navigate('/journal')} className={`text-sm font-medium ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}>Write →</button>
-                            )}
+                            <div>
+                                <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>{user.streak}</p>
+                                <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Day Streak</p>
+                            </div>
                         </div>
-
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${todayCompletion?.task ? 'bg-[#3D6B5B] text-white' : isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>
-                                <span className="material-symbols-outlined text-[16px]">{todayCompletion?.task ? 'check' : 'task_alt'}</span>
+                        {/* Minutes */}
+                        <div className={`min-w-[120px] flex-1 p-3 rounded-xl flex items-center gap-3 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-500'}`}>
+                                <span className="material-symbols-outlined">schedule</span>
                             </div>
-                            <span className={`flex-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Daily Task</span>
-                            {!todayCompletion?.task && (
-                                <button onClick={() => navigate('/task')} className={`text-sm font-medium ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>View →</button>
-                            )}
+                            <div>
+                                <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>{user.sessionCompletions.length * 10}m</p>
+                                <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Mindful Time</p>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Sleep Readiness Indicator - For Rohan persona or night routine users */}
-                {(user.persona === 'rohan' || user.routineTime === 'night') && (
-                    <div className={`rounded-xl p-4 ${isDark ? 'bg-gradient-to-br from-indigo-950 to-[#161B22]' : 'bg-gradient-to-br from-indigo-50 to-white'} shadow-sm ring-1 ${isDark ? 'ring-indigo-500/20' : 'ring-indigo-100'}`}>
-                        <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-indigo-500/20' : 'bg-indigo-100'}`}>
-                                <span className={`material-symbols-outlined text-[24px] ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                    bedtime
-                                </span>
+                        {/* Achievements */}
+                        <div className={`min-w-[120px] flex-1 p-3 rounded-xl flex items-center gap-3 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-500'}`}>
+                                <span className="material-symbols-outlined">emoji_events</span>
                             </div>
-                            <div className="flex-1">
-                                <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                    Sleep Readiness
-                                </p>
-                                {(() => {
-                                    // Calculate sleep readiness score
-                                    const hour = new Date().getHours();
-                                    const isEvening = hour >= 18 || hour < 6;
-                                    const hasMeditated = todayCompletion?.meditation;
-                                    const recentMood = user.moodHistory.slice(-1)[0]?.mood || 3;
-
-                                    let readinessScore = 0;
-                                    if (hasMeditated) readinessScore += 40;
-                                    if (isEvening) readinessScore += 20;
-                                    if (recentMood >= 3) readinessScore += 20;
-                                    if (user.nightMode) readinessScore += 20;
-
-                                    const readinessLevel = readinessScore >= 80 ? 'Excellent' : readinessScore >= 60 ? 'Good' : readinessScore >= 40 ? 'Moderate' : 'Building';
-                                    const readinessColor = readinessScore >= 80 ? 'text-green-500' : readinessScore >= 60 ? 'text-teal-500' : readinessScore >= 40 ? 'text-yellow-500' : 'text-orange-500';
-                                    const readinessEmoji = readinessScore >= 80 ? '🌙' : readinessScore >= 60 ? '😌' : readinessScore >= 40 ? '🌤️' : '☀️';
-
-                                    return (
-                                        <>
-                                            <div className="flex items-center gap-2">
-                                                <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                                                    {readinessLevel}
-                                                </h3>
-                                                <span className="text-lg">{readinessEmoji}</span>
-                                            </div>
-                                            <div className={`mt-2 h-2 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-100'} overflow-hidden`}>
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-500 ${readinessScore >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                                                        readinessScore >= 60 ? 'bg-gradient-to-r from-teal-400 to-teal-600' :
-                                                            readinessScore >= 40 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                                                                'bg-gradient-to-r from-orange-400 to-orange-600'
-                                                        }`}
-                                                    style={{ width: `${readinessScore}%` }}
-                                                />
-                                            </div>
-                                            <p className={`text-xs mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {!hasMeditated ? 'Complete evening meditation to improve' :
-                                                    !user.nightMode ? 'Turn on night mode for better rest' :
-                                                        'Ready for restful sleep'}
-                                            </p>
-                                        </>
-                                    );
-                                })()}
+                            <div>
+                                <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>{user.unlockedAchievements.length}</p>
+                                <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Badges</p>
                             </div>
                         </div>
                     </div>
-                )}
+                </section>
 
-                {/* 7-Day Mood Trends Chart */}
-                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
+                {/* 3. SIMPLIFIED JOURNEY: 7-Day Window */}
+                <section className={`rounded-2xl p-5 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm`}>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                            Mood Trends
+                            Your Journey
                         </h2>
-                        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Last 7 days
-                        </span>
+                        <button
+                            onClick={() => setShowFullJourney(!showFullJourney)}
+                            className={`text-xs font-bold ${isDark ? 'text-[#4FD1C5]' : 'text-[#3D6B5B]'}`}
+                        >
+                            {showFullJourney ? 'Show Less' : 'View Full Map'}
+                        </button>
                     </div>
 
-                    {/* Mood Chart */}
-                    <div className="flex items-end justify-between gap-2 h-24 mb-3">
-                        {(() => {
-                            const last7Days = Array.from({ length: 7 }, (_, i) => {
-                                const dayNum = user.currentDay - 6 + i;
-                                if (dayNum < 1) return { day: dayNum, mood: 0, label: '' };
-                                const mood = user.moodHistory.find(m => m.day === dayNum);
-                                const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-                                const date = new Date();
-                                date.setDate(date.getDate() - (6 - i));
-                                return {
-                                    day: dayNum,
-                                    mood: mood?.mood || 0,
-                                    label: dayNames[date.getDay()],
-                                    isToday: i === 6
-                                };
-                            });
-
-                            return last7Days.map((d, i) => (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                                    {/* Bar */}
-                                    <div className={`w-full rounded-t-lg transition-all ${d.mood === 0
-                                        ? isDark ? 'bg-gray-800' : 'bg-gray-100'
-                                        : d.mood >= 4
-                                            ? 'bg-gradient-to-t from-[#4b9b87] to-[#5EEAD4]'
-                                            : d.mood === 3
-                                                ? isDark ? 'bg-yellow-600' : 'bg-yellow-400'
-                                                : isDark ? 'bg-orange-600' : 'bg-orange-400'
-                                        }`} style={{
-                                            height: d.mood === 0 ? '20%' : `${(d.mood / 5) * 100}%`,
-                                            minHeight: '20px'
-                                        }}>
-                                        {d.mood > 0 && (
-                                            <div className="w-full h-full flex items-start justify-center pt-1">
-                                                <span className="text-xs">
-                                                    {d.mood === 5 ? '😊' : d.mood === 4 ? '🙂' : d.mood === 3 ? '😐' : d.mood === 2 ? '😔' : '😫'}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    {/* Day label */}
-                                    <span className={`text-xs font-medium ${d.isToday
-                                        ? isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'
-                                        : isDark ? 'text-gray-500' : 'text-gray-400'
-                                        }`}>
-                                        {d.label}
-                                    </span>
-                                </div>
-                            ));
-                        })()}
-                    </div>
-
-                    {/* Mood Summary */}
-                    {(() => {
-                        const recentMoods = user.moodHistory.slice(-7);
-                        if (recentMoods.length === 0) {
-                            return (
-                                <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    Complete mood check-ins to see your trends
-                                </p>
-                            );
-                        }
-                        const avg = recentMoods.reduce((acc, m) => acc + m.mood, 0) / recentMoods.length;
-                        const trend = recentMoods.length >= 2
-                            ? recentMoods[recentMoods.length - 1].mood - recentMoods[0].mood
-                            : 0;
-                        return (
-                            <div className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">{avg >= 4 ? '😊' : avg >= 3 ? '😐' : '😔'}</span>
-                                    <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        Avg: {avg.toFixed(1)}/5
-                                    </span>
-                                </div>
-                                <div className={`flex items-center gap-1 text-sm font-medium ${trend > 0
-                                    ? 'text-green-500'
-                                    : trend < 0
-                                        ? 'text-orange-500'
-                                        : isDark ? 'text-gray-400' : 'text-gray-500'
-                                    }`}>
-                                    <span className="material-symbols-outlined text-[16px]">
-                                        {trend > 0 ? 'trending_up' : trend < 0 ? 'trending_down' : 'trending_flat'}
-                                    </span>
-                                    {trend > 0 ? 'Improving' : trend < 0 ? 'Dipping' : 'Stable'}
-                                </div>
-                            </div>
-                        );
-                    })()}
-                </div>
-
-                {/* Notification Permission */}
-                {
-                    'Notification' in window && Notification.permission === 'default' && (
-                        <div className={`mt-5 rounded-xl p-4 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm flex items-center justify-between`}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                                    <span className="material-symbols-outlined text-[20px]">notifications</span>
-                                </div>
-                                <div>
-                                    <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>Enable Reminders</h3>
-                                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Get daily mindful nudges</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={async () => {
-                                    const granted = await requestNotificationPermission();
-                                    if (granted) sendWelcomeNotification();
-                                    navigate(0); // Refresh to hide card
-                                }}
-                                className={`text-xs font-bold px-4 py-2 rounded-full ${isDark ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'}`}
-                            >
-                                Enable
-                            </button>
-                        </div>
-                    )
-                }
-
-                {/* Achievements & Stats - NEW */}
-                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
-                    <div className="flex items-center justify-between mb-3">
-                        <h2 className={`font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                            Achievements
-                        </h2>
-                        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {user.unlockedAchievements.length} unlocked
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
-                        {[
-                            { id: 'seedling', icon: '🌱', label: 'Seedling' },
-                            { id: 'fire', icon: '🔥', label: 'On Fire' },
-                            { id: 'zen', icon: '🧘', label: 'Zen Master' },
-                            { id: 'star', icon: '🌟', label: 'Star' },
-                        ].map((badge) => {
-                            const isUnlocked = user.unlockedAchievements.includes(badge.id);
-                            return (
+                    <div className={`grid gap-2 ${showFullJourney ? 'grid-cols-6 sm:grid-cols-10' : 'grid-cols-7'}`}>
+                        {visibleDays.map((d) => (
+                            <div key={d.day} className="flex flex-col items-center gap-1">
                                 <div
-                                    key={badge.id}
-                                    className={`flex-shrink-0 flex flex-col items-center gap-1 p-2 w-20 rounded-xl ${isUnlocked
-                                        ? isDark ? 'bg-white/5' : 'bg-gray-50'
-                                        : 'opacity-40 grayscale'
+                                    className={`w-full aspect-square rounded-lg flex items-center justify-center text-xs font-bold transition-all ${d.isCurrent
+                                        ? 'bg-[#3D6B5B] dark:bg-[#4FD1C5] text-white dark:text-[#0B1121] scale-110 shadow-md'
+                                        : d.isComplete
+                                            ? isDark ? 'bg-[#4FD1C5]/20 text-[#4FD1C5]' : 'bg-[#3D6B5B]/20 text-[#3D6B5B]'
+                                            : d.isPartial
+                                                ? isDark ? 'bg-yellow-500/20 text-yellow-500' : 'bg-yellow-100 text-yellow-600'
+                                                : isDark ? 'bg-white/5 text-gray-600' : 'bg-gray-100 text-gray-300'
                                         }`}
                                 >
-                                    <span className="text-2xl">{badge.icon}</span>
-                                    <span className={`text-[10px] font-bold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        {badge.label}
-                                    </span>
+                                    {d.isComplete ? '✓' : d.day}
                                 </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Mini Stats */}
-                    <div className={`mt-3 pt-3 border-t ${isDark ? 'border-white/5' : 'border-gray-100'} flex justify-around`}>
-                        <div className="text-center">
-                            <p className={`text-lg font-bold ${isDark ? 'text-teal-400' : 'text-[#37a49f]'}`}>{user.streak}</p>
-                            <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Day Streak</p>
-                        </div>
-                        <div className="text-center">
-                            <p className={`text-lg font-bold ${isDark ? 'text-teal-400' : 'text-[#37a49f]'}`}>{user.sessionCompletions.length * 10}m</p>
-                            <p className={`text-[10px] uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Mindful Mins</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Professional Support - Monetization Hook */}
-                <div className={`rounded-xl p-4 ${isDark ? 'bg-gradient-to-br from-[#1e3a3a] to-[#161B22]' : 'bg-gradient-to-br from-[#e8f5f3] to-white'} shadow-sm ring-1 ${isDark ? 'ring-[#5EEAD4]/20' : 'ring-[#4b9b87]/20'}`}>
-                    <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-[#5EEAD4]/20' : 'bg-[#4b9b87]/10'}`}>
-                            <span className={`material-symbols-outlined text-[24px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
-                                psychology
-                            </span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                                Talk to a Professional
-                            </h3>
-                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                Get personalized guidance from expert psychologists.
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={() => {
-                            if (user.subscriptionStatus === 'premium') {
-                                window.open('https://mentamind.in/', '_blank');
-                            } else {
-                                navigate('/pricing');
-                            }
-                        }}
-                        className={`w-full mt-4 py-3 rounded-xl font-bold text-sm transition-all ${isDark
-                            ? 'bg-[#5EEAD4] text-[#0B1015] hover:bg-[#4CD9C3]'
-                            : 'bg-[#4b9b87] text-white hover:bg-[#3d8b7a]'
-                            }`}
-                    >
-                        {user.subscriptionStatus === 'premium' ? 'Book Appointment' : 'Upgrade to Book'}
-                    </button>
-                </div>
-
-                {/* Current Block */}
-                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
-                    <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-[#5EEAD4]/20' : 'bg-[#4b9b87]/10'}`}>
-                            <span className={`material-symbols-outlined text-[24px] ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
-                                {currentBlock === 1 ? 'foundation' : currentBlock === 2 ? 'landscape' : 'integration_instructions'}
-                            </span>
-                        </div>
-                        <div className="flex-1">
-                            <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                Block {currentBlock} of 3
-                            </p>
-                            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                                {blockInfo?.name || 'Foundation'}
-                            </h3>
-                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {blockInfo?.focus || 'Building your foundation'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Journey Timeline */}
-                <div className={`rounded-xl p-4 ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm`}>
-                    <h2 className={`font-bold mb-4 ${isDark ? 'text-white' : 'text-[#111817]'}`}>
-                        30-Day Journey
-                    </h2>
-
-                    <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-1.5">
-                        {journeyDays.map((d) => (
-                            <div
-                                key={d.day}
-                                className={`aspect-square rounded-lg flex items-center justify-center text-xs font-medium transition-all ${d.isCurrent
-                                    ? 'bg-[#4b9b87] text-white ring-2 ring-[#4b9b87] ring-offset-2 dark:ring-offset-[#161B22]'
-                                    : d.isComplete
-                                        ? isDark ? 'bg-[#5EEAD4]/20 text-[#5EEAD4]' : 'bg-[#4b9b87]/20 text-[#4b9b87]'
-                                        : d.isPartial
-                                            ? isDark ? 'bg-yellow-900/30 text-yellow-400' : 'bg-yellow-100 text-yellow-600'
-                                            : d.day < user.currentDay
-                                                ? isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'
-                                                : isDark ? 'bg-gray-800/50 text-gray-600' : 'bg-gray-50 text-gray-300'
-                                    }`}
-                            >
-                                {d.isComplete ? '✓' : d.day}
                             </div>
                         ))}
                     </div>
+                </section>
 
-                    {/* Legend */}
-                    <div className={`flex items-center gap-4 mt-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                        <span className="flex items-center gap-1">
-                            <div className={`w-3 h-3 rounded ${isDark ? 'bg-[#5EEAD4]/20' : 'bg-[#4b9b87]/20'}`} />
-                            Complete
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <div className={`w-3 h-3 rounded ${isDark ? 'bg-yellow-900/30' : 'bg-yellow-100'}`} />
-                            Partial
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded bg-[#4b9b87]" />
-                            Today
-                        </span>
+                {/* 4. BENTO GRID: Secondary Items */}
+                <section className="grid grid-cols-2 gap-3">
+                    {/* Sleep Card */}
+                    <div className={`col-span-1 rounded-2xl p-4 flex flex-col justify-between h-32 ${isDark ? 'bg-indigo-900/20' : 'bg-indigo-50'} cursor-pointer`} onClick={() => navigate('/player')}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-200 text-indigo-700'}`}>
+                            <span className="material-symbols-outlined text-[18px]">bedtime</span>
+                        </div>
+                        <div>
+                            <h3 className={`font-bold text-sm ${isDark ? 'text-indigo-200' : 'text-indigo-900'}`}>{user.nightMode ? 'Night Mode On' : 'Sleep Ready'}</h3>
+                            <p className={`text-[10px] ${isDark ? 'text-indigo-400' : 'text-indigo-700/70'}`}>Prepare for rest</p>
+                        </div>
                     </div>
+
+                    {/* Mood Trends Card */}
+                    <div className={`col-span-1 rounded-2xl p-4 flex flex-col justify-between h-32 ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm cursor-pointer`} onClick={() => navigate('/journal')}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+                            <span className="material-symbols-outlined text-[18px]">show_chart</span>
+                        </div>
+                        <div>
+                            <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-[#111817]'}`}>Mood Trends</h3>
+                            <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Check your insights</p>
+                        </div>
+                    </div>
+
+                    {/* Support / Programs Link */}
+                    <div className={`col-span-2 rounded-2xl p-4 flex items-center justify-between ${isDark ? 'bg-[#151E32]' : 'bg-white'} shadow-sm cursor-pointer`} onClick={() => navigate('/programs')}>
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-[#4FD1C5]/10 text-[#4FD1C5]' : 'bg-[#3D6B5B]/10 text-[#3D6B5B]'}`}>
+                                <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                            </div>
+                            <div>
+                                <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-[#111817]'}`}>Browse Programs</h3>
+                                <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Explore guided series</p>
+                            </div>
+                        </div>
+                        <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+                    </div>
+                </section>
+
+                {/* Footer Quote or Decorative */}
+                <div className="text-center py-6 opacity-30">
+                    <p className="text-xs font-serif italic">"Breath is the bridge between mind and body."</p>
                 </div>
 
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        onClick={() => navigate('/programs')}
-                        className={`p-3 rounded-xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm text-left`}
-                    >
-                        <span className={`material-symbols-outlined text-[24px] mb-2 ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
-                            grid_view
-                        </span>
-                        <p className={`font-bold text-sm ${isDark ? 'text-white' : 'text-[#111817]'}`}>Programs</p>
-                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Browse all</p>
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/profile')}
-                        className={`p-3 rounded-xl ${isDark ? 'bg-[#161B22]' : 'bg-white'} shadow-sm text-left`}
-                    >
-                        <span className={`material-symbols-outlined text-[24px] mb-2 ${isDark ? 'text-[#5EEAD4]' : 'text-[#4b9b87]'}`}>
-                            settings
-                        </span>
-                        <p className={`font-bold text-sm ${isDark ? 'text-white' : 'text-[#111817]'}`}>Settings</p>
-                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Preferences</p>
-                    </button>
-                </div>
             </main>
         </div>
     );

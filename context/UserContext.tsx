@@ -157,6 +157,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [user, setUser] = useState<UserState>(defaultUserState);
     const [isLoading, setIsLoading] = useState(true);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const ignoreNextSave = useRef(false);
 
     // React to session changes
     useEffect(() => {
@@ -168,10 +169,14 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     const progress = await progressService.getProgress(session.userId);
 
                     if (progress) {
+                        // Prevent the immediate save effect from overwriting DB with what we just loaded
+                        ignoreNextSave.current = true;
                         setUser(progressToUserState(progress));
                         console.log(`[UserContext] Loaded progress for user ID: ${session.userId}`);
                     } else {
                         // New user or no progress yet - reset to default but keep name from session
+                        // Also ignore save here to prevent overwriting with default immediately if DB read failed silently
+                        ignoreNextSave.current = true;
                         setUser({
                             ...defaultUserState,
                             name: session.username, // Use username as default name
@@ -185,6 +190,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 }
             } else {
                 // No session - reset state
+                ignoreNextSave.current = true;
                 setUser(defaultUserState);
                 setIsLoading(false);
             }
@@ -217,6 +223,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Save to IndexedDB on state changes
     useEffect(() => {
         if (!isLoading && session?.userId) {
+            if (ignoreNextSave.current) {
+                ignoreNextSave.current = false;
+                return;
+            }
             saveToIndexedDB(user);
         }
     }, [user, isLoading, session?.userId, saveToIndexedDB]);

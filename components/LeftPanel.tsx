@@ -18,6 +18,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ isCollapsed, onToggle }) => {
         { path: '/profile', icon: 'person', label: 'PROFILE' },
         { path: '/home', icon: 'wb_sunny', label: 'TODAY' },
         { path: '/journey', icon: 'map', label: 'JOURNEY' },
+        { path: '/debug', icon: 'bug_report', label: 'DEBUG' },
     ];
 
     const isActive = (path: string) => location.pathname === path;
